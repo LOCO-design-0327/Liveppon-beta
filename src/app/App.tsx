@@ -648,7 +648,16 @@ export default function App() {
     .sort((a, b) => b[1].quantity - a[1].quantity)
     .slice(0, 5);
 
-  const categories = ["すべて", ...Array.from(new Set(products.map((p) => p.category).filter(Boolean)))];
+  const categories = [
+    "すべて",
+    ...Array.from(
+      new Set(
+        products
+          .map((product) => product.category)
+          .filter((category): category is string => Boolean(category))
+      )
+    ),
+  ];
 
   const filteredProducts = products.filter((product) => {
     const categoryMatch =
@@ -680,11 +689,10 @@ export default function App() {
                 setCurrentTab("sales");
                 setSwipedSaleId(null);
               }}
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                currentTab === "sales"
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${currentTab === "sales"
                   ? "bg-primary text-primary-foreground"
                   : "hover:bg-secondary"
-              }`}
+                }`}
             >
               <ShoppingBag className="w-4 h-4" />
               販売
@@ -694,11 +702,10 @@ export default function App() {
                 setCurrentTab("history");
                 setSwipedSaleId(null);
               }}
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                currentTab === "history"
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${currentTab === "history"
                   ? "bg-primary text-primary-foreground"
                   : "hover:bg-secondary"
-              }`}
+                }`}
             >
               <History className="w-4 h-4" />
               履歴
@@ -708,11 +715,10 @@ export default function App() {
                 setCurrentTab("summary");
                 setSwipedSaleId(null);
               }}
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                currentTab === "summary"
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${currentTab === "summary"
                   ? "bg-primary text-primary-foreground"
                   : "hover:bg-secondary"
-              }`}
+                }`}
             >
               <TrendingUp className="w-4 h-4" />
               売上サマリー
@@ -777,7 +783,7 @@ export default function App() {
                     <button
                       key={category}
                       onClick={() => setSelectedCategory(category)}
-                      className={`px-4 py-2 rounded-full transition-colors ${ selectedCategory === category ? "bg-primary text-primary-foreground" : "bg-card hover:bg-card/80 border border-border" } text-[14px]`}
+                      className={`px-4 py-2 rounded-full transition-colors ${selectedCategory === category ? "bg-primary text-primary-foreground" : "bg-card hover:bg-card/80 border border-border"} text-[14px]`}
                     >
                       {category}
                     </button>
@@ -885,22 +891,20 @@ export default function App() {
                   <div className="flex gap-2 mb-4">
                     <button
                       onClick={() => setPaymentMethod("cash")}
-                      className={`flex-1 py-3 rounded-lg flex items-center justify-center gap-2 ${
-                        paymentMethod === "cash"
+                      className={`flex-1 py-3 rounded-lg flex items-center justify-center gap-2 ${paymentMethod === "cash"
                           ? "bg-primary text-primary-foreground"
                           : "bg-secondary hover:bg-secondary/80"
-                      }`}
+                        }`}
                     >
                       <Banknote className="w-4 h-4" />
                       現金
                     </button>
                     <button
                       onClick={() => setPaymentMethod("qr")}
-                      className={`flex-1 py-3 rounded-lg flex items-center justify-center gap-2 ${
-                        paymentMethod === "qr"
+                      className={`flex-1 py-3 rounded-lg flex items-center justify-center gap-2 ${paymentMethod === "qr"
                           ? "bg-primary text-primary-foreground"
                           : "bg-secondary hover:bg-secondary/80"
-                      }`}
+                        }`}
                     >
                       <QrCode className="w-4 h-4" />
                       QR
@@ -926,11 +930,10 @@ export default function App() {
               <h2>販売履歴</h2>
               <button
                 onClick={isOwnerMode ? exportSalesCSV : handleOwnerLogin}
-                className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
-                  isOwnerMode
+                className={`px-4 py-2 rounded-lg flex items-center gap-2 ${isOwnerMode
                     ? "bg-primary text-primary-foreground hover:bg-primary/90"
                     : "bg-card/50 text-muted-foreground cursor-pointer hover:bg-card/70"
-                }`}
+                  }`}
               >
                 {!isOwnerMode && (
                   <svg
@@ -1049,89 +1052,88 @@ export default function App() {
                     return true;
                   })
                   .map((sale) => {
-                  const isSwiped = swipedSaleId === sale.id;
+                    const isSwiped = swipedSaleId === sale.id;
 
-                  return (
-                    <div
-                      key={sale.id}
-                      className="relative overflow-hidden rounded-lg"
-                    >
-                      {!sale.isCancelled && (
-                        <div className="absolute inset-0 bg-destructive flex items-center justify-end px-6">
-                          <button
-                            onClick={() => {
-                              cancelSale(sale.id);
-                              setSwipedSaleId(null);
-                            }}
-                            className="flex items-center gap-2 text-destructive-foreground"
-                          >
-                            <span>取引キャンセル</span>
-                          </button>
-                        </div>
-                      )}
-
+                    return (
                       <div
-                        className={`relative p-4 border transition-transform duration-200 ${
-                          sale.isCancelled
-                            ? "bg-destructive/10 border-destructive/30"
-                            : "bg-card border-border cursor-pointer"
-                        } ${isSwiped && !sale.isCancelled ? "-translate-x-36" : ""}`}
-                        onClick={() =>
-                          !sale.isCancelled &&
-                          setSwipedSaleId(isSwiped ? null : sale.id)
-                        }
+                        key={sale.id}
+                        className="relative overflow-hidden rounded-lg"
                       >
-                        <div className="flex justify-between items-start mb-3">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-muted-foreground">
-                                {new Date(sale.timestamp).toLocaleString(
-                                  "ja-JP"
-                                )}
-                              </span>
-                              {sale.isCancelled && (
-                                <span className="text-xs text-destructive">
-                                  [キャンセル済み]
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2 mt-1">
-                              {sale.paymentMethod === "cash" ? (
-                                <Banknote className="w-4 h-4" />
-                              ) : (
-                                <QrCode className="w-4 h-4" />
-                              )}
-                              <span className="text-sm">
-                                {sale.paymentMethod === "cash" ? "現金" : "QR"}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-xl text-primary">
-                              ¥{sale.total.toLocaleString()}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="space-y-1">
-                          {sale.items.map((item, idx) => (
-                            <div
-                              key={idx}
-                              className="text-sm flex justify-between text-muted-foreground"
+                        {!sale.isCancelled && (
+                          <div className="absolute inset-0 bg-destructive flex items-center justify-end px-6">
+                            <button
+                              onClick={() => {
+                                cancelSale(sale.id);
+                                setSwipedSaleId(null);
+                              }}
+                              className="flex items-center gap-2 text-destructive-foreground"
                             >
-                              <span>
-                                {item.name} × {item.quantity}
-                              </span>
-                              <span>
-                                ¥{(item.price * item.quantity).toLocaleString()}
-                              </span>
+                              <span>取引キャンセル</span>
+                            </button>
+                          </div>
+                        )}
+
+                        <div
+                          className={`relative p-4 border transition-transform duration-200 ${sale.isCancelled
+                              ? "bg-destructive/10 border-destructive/30"
+                              : "bg-card border-border cursor-pointer"
+                            } ${isSwiped && !sale.isCancelled ? "-translate-x-36" : ""}`}
+                          onClick={() =>
+                            !sale.isCancelled &&
+                            setSwipedSaleId(isSwiped ? null : sale.id)
+                          }
+                        >
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-muted-foreground">
+                                  {new Date(sale.timestamp).toLocaleString(
+                                    "ja-JP"
+                                  )}
+                                </span>
+                                {sale.isCancelled && (
+                                  <span className="text-xs text-destructive">
+                                    [キャンセル済み]
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 mt-1">
+                                {sale.paymentMethod === "cash" ? (
+                                  <Banknote className="w-4 h-4" />
+                                ) : (
+                                  <QrCode className="w-4 h-4" />
+                                )}
+                                <span className="text-sm">
+                                  {sale.paymentMethod === "cash" ? "現金" : "QR"}
+                                </span>
+                              </div>
                             </div>
-                          ))}
+                            <div className="text-right">
+                              <div className="text-xl text-primary">
+                                ¥{sale.total.toLocaleString()}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="space-y-1">
+                            {sale.items.map((item, idx) => (
+                              <div
+                                key={idx}
+                                className="text-sm flex justify-between text-muted-foreground"
+                              >
+                                <span>
+                                  {item.name} × {item.quantity}
+                                </span>
+                                <span>
+                                  ¥{(item.price * item.quantity).toLocaleString()}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
               </div>
             )}
           </div>
@@ -1387,9 +1389,9 @@ export default function App() {
         saleName={
           cancelTargetSaleId
             ? sales
-                .find((s) => s.id === cancelTargetSaleId)
-                ?.items.map((item) => `${item.name} × ${item.quantity}`)
-                .join(", ") || ""
+              .find((s) => s.id === cancelTargetSaleId)
+              ?.items.map((item) => `${item.name} × ${item.quantity}`)
+              .join(", ") || ""
             : ""
         }
       />
