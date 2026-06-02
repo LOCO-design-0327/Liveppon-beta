@@ -73,10 +73,10 @@ export function CheckoutModal({
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
-    onClick={onClose}
+      onClick={onClose}
     >
       <div className="bg-background border border-border rounded-lg w-[90vw] max-w-4xl h-[80vh] flex flex-col"
-      onClick={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-6 border-b border-border">
           <h2 className="flex items-center gap-2">
@@ -136,9 +136,8 @@ export function CheckoutModal({
                 <button
                   onClick={handleQRImageClick}
                   disabled={!!qrCodeImage}
-                  className={`w-64 h-64 bg-white rounded-lg flex items-center justify-center mb-6 p-4 ${
-                    !qrCodeImage ? "hover:bg-gray-100 cursor-pointer" : ""
-                  }`}
+                  className={`w-64 h-64 bg-white rounded-lg flex items-center justify-center mb-6 p-4 ${!qrCodeImage ? "hover:bg-gray-100 cursor-pointer" : ""
+                    }`}
                 >
                   {qrCodeImage ? (
                     <img
@@ -173,11 +172,11 @@ export function CheckoutModal({
               </div>
             ) : (
               <div className="flex-1 flex flex-col">
-                <div className="mb-4">
-                  <div className="text-sm text-muted-foreground mb-2">
+                <div className="mb-3 flex items-end justify-between gap-4">
+                  <div className="text-sm text-muted-foreground">
                     預かり金額
                   </div>
-                  <div className="text-4xl text-primary">
+                  <div className="text-3xl text-primary text-right leading-none">
                     ¥{receivedAmount.toLocaleString()}
                   </div>
                 </div>
@@ -246,11 +245,11 @@ export function CheckoutModal({
                 </div>
 
                 {receivedAmount >= total && (
-                  <div className="mb-6 p-4 bg-card rounded-lg">
-                    <div className="text-sm text-muted-foreground mb-2">
+                  <div className="mb-4 p-4 bg-card rounded-lg flex items-end justify-between gap-4">
+                    <div className="text-sm text-muted-foreground">
                       お釣り
                     </div>
-                    <div className="text-3xl text-primary">
+                    <div className="text-3xl text-primary text-right leading-none">
                       ¥{change.toLocaleString()}
                     </div>
                   </div>
