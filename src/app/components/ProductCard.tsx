@@ -23,9 +23,7 @@ export function ProductCard({
   onUpdateQuantity,
 }: ProductCardProps) {
   const [showQuantityAdjust, setShowQuantityAdjust] = useState(false);
-  const pressTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const closeTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const lastInteractionRef = useRef<number>(Date.now());
+  const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null); const lastInteractionRef = useRef<number>(Date.now());
 
   useEffect(() => {
     if (showQuantityAdjust) {
@@ -63,8 +61,18 @@ export function ProductCard({
   };
 
   const handleQuantityChange = (change: number) => {
-    onUpdateQuantity(change);
+    const nextQuantity = Math.max(0, cartQuantity + change);
+    const safeChange = nextQuantity - cartQuantity;
+
+    if (safeChange !== 0) {
+      onUpdateQuantity(safeChange);
+    }
+
     lastInteractionRef.current = Date.now();
+
+    if (nextQuantity === 0) {
+      setShowQuantityAdjust(false);
+    }
   };
 
   const isOutOfStock = stock === 0;
@@ -72,11 +80,10 @@ export function ProductCard({
 
   return (
     <div
-      className={`relative aspect-square rounded-lg overflow-hidden transition-all ${
-        isOutOfStock
-          ? "bg-card/50 cursor-not-allowed opacity-60"
-          : "bg-card cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
-      }`}
+      className={`relative aspect-square rounded-lg overflow-hidden transition-all ${isOutOfStock
+        ? "bg-card/50 cursor-not-allowed opacity-60"
+        : "bg-card cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+        }`}
       onClick={handleClick}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
