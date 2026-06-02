@@ -61,8 +61,12 @@ export function ArchiveModal({
 
   if (selectedArchive) {
     return (
-      <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-        <div className="bg-background border border-border rounded-lg w-[800px] max-h-[85vh] flex flex-col">
+      <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+        onClick={onClose}
+      >
+        <div className="bg-background border border-border rounded-lg w-[800px] max-h-[85vh] flex flex-col"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="flex items-center justify-between p-6 border-b border-border">
             <div>
               <h2>{selectedArchive.name}</h2>
@@ -119,11 +123,10 @@ export function ArchiveModal({
               {selectedArchive.sales.map((sale) => (
                 <div
                   key={sale.id}
-                  className={`p-3 rounded-lg border ${
-                    sale.isCancelled
+                  className={`p-3 rounded-lg border ${sale.isCancelled
                       ? "bg-destructive/10 border-destructive/30"
                       : "bg-card border-border"
-                  }`}
+                    }`}
                 >
                   <div className="flex justify-between items-start mb-2">
                     <div className="text-xs text-muted-foreground">

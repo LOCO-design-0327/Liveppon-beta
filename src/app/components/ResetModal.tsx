@@ -35,8 +35,12 @@ export function ResetModal({ isOpen, onClose, onReset }: ResetModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div className="bg-background border-2 border-destructive rounded-lg w-[600px] p-6">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+      onClick={handleClose}
+      >
+      <div className="bg-background border-2 border-destructive rounded-lg w-[600px] p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             <Trash2 className="w-6 h-6 text-destructive" />

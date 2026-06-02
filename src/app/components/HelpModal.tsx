@@ -10,8 +10,12 @@ export function HelpModal({ isOpen, onClose, onBackToSettings }: HelpModalProps)
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div className="bg-background border border-border rounded-lg w-[800px] max-h-[85vh] flex flex-col">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+      onClick={onClose}
+    >
+      <div className="bg-background border border-border rounded-lg w-[800px] max-h-[85vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between p-6 border-b border-border">
           <div className="flex items-center gap-2">
             <HelpCircle className="w-6 h-6 text-primary" />

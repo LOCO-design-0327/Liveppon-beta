@@ -124,8 +124,12 @@ export function CSVImportModal({
 
   if (importResult) {
     return (
-      <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-        <div className="bg-background border border-border rounded-lg w-[500px] p-6">
+      <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+      onClick={onClose}
+      >
+        <div className="bg-background border border-border rounded-lg w-[500px] p-6"
+        onClick={(e) => e.stopPropagation()}
+        >
           <div className="flex items-center justify-between mb-6">
             <h2>読み込み完了</h2>
             <button

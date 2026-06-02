@@ -72,8 +72,12 @@ export function CheckoutModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div className="bg-background border border-border rounded-lg w-[90vw] max-w-4xl h-[80vh] flex flex-col">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+    onClick={onClose}
+    >
+      <div className="bg-background border border-border rounded-lg w-[90vw] max-w-4xl h-[80vh] flex flex-col"
+      onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between p-6 border-b border-border">
           <h2 className="flex items-center gap-2">
             {paymentMethod === "cash" ? (

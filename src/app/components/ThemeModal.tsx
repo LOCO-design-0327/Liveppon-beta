@@ -28,8 +28,12 @@ export function ThemeModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div className="bg-background border border-border rounded-lg w-[600px] max-h-[85vh] flex flex-col">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+      onClick={onClose}
+    >
+      <div className="bg-background border border-border rounded-lg w-[600px] max-h-[85vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between p-6 border-b border-border">
           <div className="flex items-center gap-2">
             <Palette className="w-6 h-6 text-primary" />
@@ -49,11 +53,10 @@ export function ThemeModal({
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => onThemeChange("dark")}
-                className={`p-4 rounded-lg border-2 transition-all ${
-                  currentTheme === "dark"
+                className={`p-4 rounded-lg border-2 transition-all ${currentTheme === "dark"
                     ? "border-primary bg-primary/10"
                     : "border-border hover:border-primary/50"
-                }`}
+                  }`}
               >
                 <Moon className="w-8 h-8 mx-auto mb-2" />
                 <div className="text-sm text-center">ダークモード</div>
@@ -61,11 +64,10 @@ export function ThemeModal({
 
               <button
                 onClick={() => onThemeChange("light")}
-                className={`p-4 rounded-lg border-2 transition-all ${
-                  currentTheme === "light"
+                className={`p-4 rounded-lg border-2 transition-all ${currentTheme === "light"
                     ? "border-primary bg-primary/10"
                     : "border-border hover:border-primary/50"
-                }`}
+                  }`}
               >
                 <Sun className="w-8 h-8 mx-auto mb-2" />
                 <div className="text-sm text-center">ライトモード</div>
@@ -80,9 +82,8 @@ export function ThemeModal({
                 <button
                   key={color}
                   onClick={() => onColorChange(color)}
-                  className={`relative transition-all hover:scale-110 ${
-                    currentColor === color ? "scale-110" : ""
-                  }`}
+                  className={`relative transition-all hover:scale-110 ${currentColor === color ? "scale-110" : ""
+                    }`}
                 >
                   <div
                     className="w-16 h-16 rounded-full border-4 transition-all"
