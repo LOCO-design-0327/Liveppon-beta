@@ -59,8 +59,15 @@ export function SettingsModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div className="bg-background border border-border rounded-lg w-[90vw] max-w-6xl h-[85vh] flex flex-col">
+    <div
+      className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+      onClick={onClose}
+    >
+      <div
+        className="bg-background border border-border rounded-lg w-[90vw] max-w-6xl h-[85vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+
         {isOwnerMode && (
           <div className="bg-primary text-primary-foreground px-6 py-2 flex items-center justify-center gap-4">
             <span>オーナーモード中です</span>
