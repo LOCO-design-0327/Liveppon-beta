@@ -1,0 +1,43 @@
+/* iPad / PWA 操作時の長押し選択・青ハイライト防止 */
+html,
+body,
+#root,
+* {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+a,
+[role="button"],
+.product-card,
+.cart-item,
+.tab-button,
+.category-tab,
+.settings-card,
+.modal,
+.modal-content {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* SVG・画像の長押し保存/ドラッグ防止 */
+img,
+svg {
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+/* 入力欄だけは選択・入力できるように戻す */
+input,
+textarea,
+select {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
