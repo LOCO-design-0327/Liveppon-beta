@@ -667,18 +667,17 @@ export default function App() {
   });
 
   return (
-    <div className="h-screen flex flex-col bg-background text-foreground">
-      {isTestMode && (
-        <div className="bg-warning text-warning-foreground px-6 py-2 text-center flex items-center justify-center gap-4">
-          <span>テストモード中 - 販売履歴に記録されません</span>
-          <button
-            onClick={() => setIsTestMode(false)}
-            className="px-3 py-1 bg-warning-foreground text-warning rounded text-sm hover:opacity-90"
-          >
-            終了
-          </button>
-        </div>
-      )}
+    <div className="fixed inset-0 flex flex-col bg-background text-foreground overflow-hidden">      {isTestMode && (
+      <div className="bg-warning text-warning-foreground px-6 py-2 text-center flex items-center justify-center gap-4">
+        <span>テストモード中 - 販売履歴に記録されません</span>
+        <button
+          onClick={() => setIsTestMode(false)}
+          className="px-3 py-1 bg-warning-foreground text-warning rounded text-sm hover:opacity-90"
+        >
+          終了
+        </button>
+      </div>
+    )}
       <header className="bg-card border-b border-border px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-8">
           <h1 className="text-primary">Liveppon</h1>
@@ -690,8 +689,8 @@ export default function App() {
                 setSwipedSaleId(null);
               }}
               className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${currentTab === "sales"
-                  ? "bg-primary text-primary-foreground"
-                  : "hover:bg-secondary"
+                ? "bg-primary text-primary-foreground"
+                : "hover:bg-secondary"
                 }`}
             >
               <ShoppingBag className="w-4 h-4" />
@@ -703,8 +702,8 @@ export default function App() {
                 setSwipedSaleId(null);
               }}
               className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${currentTab === "history"
-                  ? "bg-primary text-primary-foreground"
-                  : "hover:bg-secondary"
+                ? "bg-primary text-primary-foreground"
+                : "hover:bg-secondary"
                 }`}
             >
               <History className="w-4 h-4" />
@@ -716,8 +715,8 @@ export default function App() {
                 setSwipedSaleId(null);
               }}
               className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${currentTab === "summary"
-                  ? "bg-primary text-primary-foreground"
-                  : "hover:bg-secondary"
+                ? "bg-primary text-primary-foreground"
+                : "hover:bg-secondary"
                 }`}
             >
               <TrendingUp className="w-4 h-4" />
@@ -789,7 +788,7 @@ export default function App() {
                     </button>
                   ))}
                 </div>
-                <label className="flex items-center gap-2 cursor-pointer ml-auto">
+                <label className="flex items-center gap-2 cursor-pointer ml-auto whitespace-nowrap min-w-[130px] justify-end">
                   <input
                     type="checkbox"
                     checked={hideOutOfStock}
@@ -892,8 +891,8 @@ export default function App() {
                     <button
                       onClick={() => setPaymentMethod("cash")}
                       className={`flex-1 py-3 rounded-lg flex items-center justify-center gap-2 ${paymentMethod === "cash"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-secondary hover:bg-secondary/80"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary hover:bg-secondary/80"
                         }`}
                     >
                       <Banknote className="w-4 h-4" />
@@ -902,8 +901,8 @@ export default function App() {
                     <button
                       onClick={() => setPaymentMethod("qr")}
                       className={`flex-1 py-3 rounded-lg flex items-center justify-center gap-2 ${paymentMethod === "qr"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-secondary hover:bg-secondary/80"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary hover:bg-secondary/80"
                         }`}
                     >
                       <QrCode className="w-4 h-4" />
@@ -931,8 +930,8 @@ export default function App() {
               <button
                 onClick={isOwnerMode ? exportSalesCSV : handleOwnerLogin}
                 className={`px-4 py-2 rounded-lg flex items-center gap-2 ${isOwnerMode
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                    : "bg-card/50 text-muted-foreground cursor-pointer hover:bg-card/70"
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                  : "bg-card/50 text-muted-foreground cursor-pointer hover:bg-card/70"
                   }`}
               >
                 {!isOwnerMode && (
@@ -1075,8 +1074,8 @@ export default function App() {
 
                         <div
                           className={`relative p-4 border transition-transform duration-200 ${sale.isCancelled
-                              ? "bg-destructive/10 border-destructive/30"
-                              : "bg-card border-border cursor-pointer"
+                            ? "bg-destructive/10 border-destructive/30"
+                            : "bg-card border-border cursor-pointer"
                             } ${isSwiped && !sale.isCancelled ? "-translate-x-36" : ""}`}
                           onClick={() =>
                             !sale.isCancelled &&
