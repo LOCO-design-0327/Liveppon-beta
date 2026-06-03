@@ -30,6 +30,7 @@ export function SceneManagementModal({
 }: SceneManagementModalProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [sceneName, setSceneName] = useState("");
+  const [showHelp, setShowHelp] = useState(false);
 
   if (!isOpen) return null;
 
@@ -63,15 +64,25 @@ export function SceneManagementModal({
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
       onClick={onClose}
-      >
+    >
       <div className="bg-background border border-border rounded-lg w-[700px] max-h-[80vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-6 border-b border-border">
           <div className="flex items-center gap-2">
             <Layers className="w-6 h-6 text-primary" />
+
             <h2>シーン管理</h2>
+
+            <button
+              type="button"
+              onClick={() => setShowHelp(true)}
+              className="text-primary hover:text-primary/80"
+            >
+              ⓘ
+            </button>
           </div>
+
           <button
             onClick={onClose}
             className="w-8 h-8 rounded hover:bg-secondary flex items-center justify-center"
@@ -99,6 +110,26 @@ export function SceneManagementModal({
               <div className="text-sm text-muted-foreground">
                 現在の商品{currentProducts.length}件を保存します
               </div>
+
+              <div className="p-4 bg-card rounded-lg border border-border">
+                <p className="text-sm font-medium">
+                  イベントごとの商品構成を保存できます
+                </p>
+
+                <div className="mt-2 text-sm text-muted-foreground">
+                  保存対象
+                </div>
+
+                <ul className="mt-1 text-sm text-muted-foreground space-y-1">
+                  <li>・商品一覧</li>
+                  <li>・価格</li>
+                  <li>・在庫</li>
+                  <li>・カテゴリ</li>
+                  <li>・画像</li>
+                  <li>・並び順</li>
+                </ul>
+              </div>
+
               <div className="flex gap-2">
                 <button
                   onClick={handleSave}
@@ -170,6 +201,73 @@ export function SceneManagementModal({
           )}
         </div>
       </div>
+
+      {showHelp && (
+        <div
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999]"
+          onClick={() => setShowHelp(false)}
+        >
+          <div
+            className="bg-background border border-border rounded-lg w-[520px] p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-xl font-bold mb-4">
+              シーン保存とは？
+            </h2>
+
+            <div className="space-y-4 text-sm">
+
+              <div>
+                <h3 className="text-primary font-semibold mb-1">
+                  何の機能か
+                </h3>
+
+                <p className="text-muted-foreground">
+                  商品構成を保存し、
+                  別イベント用に切り替えられる機能です。
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-primary font-semibold mb-1">
+                  できること
+                </h3>
+
+                <ul className="space-y-1 text-muted-foreground">
+                  <li>✓ 商品名</li>
+                  <li>✓ 商品画像</li>
+                  <li>✓ 価格</li>
+                  <li>✓ 在庫</li>
+                  <li>✓ カテゴリ</li>
+                  <li>✓ 並び順</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-primary font-semibold mb-1">
+                  注意事項
+                </h3>
+
+                <ul className="space-y-1 text-muted-foreground">
+                  <li>✕ 販売履歴</li>
+                  <li>✕ 売上データ</li>
+                  <li>✕ カート内容</li>
+                  <li>✕ QR設定</li>
+                </ul>
+              </div>
+
+            </div>
+
+            <button
+              onClick={() => setShowHelp(false)}
+              className="w-full mt-6 py-3 rounded-lg bg-primary text-primary-foreground"
+            >
+              閉じる
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
