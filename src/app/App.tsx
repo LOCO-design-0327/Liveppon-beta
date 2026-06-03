@@ -42,6 +42,7 @@ export default function App() {
   const [currentTab, setCurrentTab] = useState<
     "sales" | "history" | "summary"
   >("sales");
+  const [isSummaryHelpOpen, setIsSummaryHelpOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("すべて");
   const [hideOutOfStock, setHideOutOfStock] = useLocalStorage<boolean>(
     "hideOutOfStock",
@@ -1157,7 +1158,20 @@ export default function App() {
 
         {currentTab === "summary" && (
           <div className="h-full p-6 overflow-y-auto">
-            <h2 className="mb-6">売上サマリー</h2>
+            <div className="flex items-center gap-2 mb-2">
+              <h2>売上サマリー</h2>
+
+              <button
+                onClick={() => setIsSummaryHelpOpen(true)}
+                className="text-primary hover:opacity-80"
+              >
+                ⓘ
+              </button>
+            </div>
+
+            <p className="text-sm text-muted-foreground mb-6">
+              売上状況をまとめて確認できます
+            </p>
 
             <div className="grid grid-cols-4 gap-4 mb-8">
               <div className="bg-card p-6 rounded-lg">
@@ -1378,6 +1392,74 @@ export default function App() {
 
             <button
               onClick={() => setIsSalesHistoryHelpOpen(false)}
+              className="w-full mt-6 py-3 rounded-lg bg-primary text-primary-foreground"
+            >
+              閉じる
+            </button>
+          </div>
+        </div>
+      )}
+
+      {isSummaryHelpOpen && (
+        <div
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999]"
+          onClick={() => setIsSummaryHelpOpen(false)}
+        >
+          <div
+            className="bg-background border border-border rounded-lg w-[560px] p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-xl font-bold mb-4">
+              売上サマリーとは？
+            </h2>
+
+            <div className="space-y-4 text-sm">
+
+              <div>
+                <h3 className="text-primary font-semibold mb-1">
+                  何の機能か
+                </h3>
+
+                <p className="text-muted-foreground">
+                  売上データを集計し、
+                  イベント全体の状況を確認する機能です。
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-primary font-semibold mb-1">
+                  できること
+                </h3>
+
+                <ul className="space-y-1 text-muted-foreground">
+                  <li>✓ 総売上確認</li>
+                  <li>✓ 販売件数確認</li>
+                  <li>✓ 現金売上確認</li>
+                  <li>✓ QR売上確認</li>
+                  <li>✓ 売れ筋商品確認</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-primary font-semibold mb-1">
+                  注意事項
+                </h3>
+
+                <p className="text-muted-foreground">
+                  売上サマリーは販売履歴をもとに
+                  自動集計されています。
+                </p>
+
+                <p className="text-muted-foreground mt-2">
+                  販売履歴を削除すると
+                  集計結果も変動します。
+                </p>
+              </div>
+
+            </div>
+
+            <button
+              onClick={() => setIsSummaryHelpOpen(false)}
               className="w-full mt-6 py-3 rounded-lg bg-primary text-primary-foreground"
             >
               閉じる
