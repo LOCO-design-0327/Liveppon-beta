@@ -125,6 +125,8 @@ export default function App() {
   const [filterDateFrom, setFilterDateFrom] = useState("");
   const [filterDateTo, setFilterDateTo] = useState("");
 
+  const [isSalesHistoryHelpOpen, setIsSalesHistoryHelpOpen] = useState(false);
+
   const [ownerPin, setOwnerPin] = useLocalStorage<string>("ownerPin", "123456");
   const [isOwnerMode, setIsOwnerMode] = useState(false);
   const [isTestMode, setIsTestMode] = useState(false);
@@ -926,7 +928,22 @@ export default function App() {
         {currentTab === "history" && (
           <div className="h-full p-6 overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h2>販売履歴</h2>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2>販売履歴</h2>
+                  <button
+                    type="button"
+                    onClick={() => setIsSalesHistoryHelpOpen(true)}
+                    className="text-primary hover:text-primary/80"
+                  >
+                    ⓘ
+                  </button>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  販売履歴の検索・確認・CSV出力ができます
+                </p>
+              </div>
+
               <button
                 onClick={isOwnerMode ? exportSalesCSV : handleOwnerLogin}
                 className={`px-4 py-2 rounded-lg flex items-center gap-2 ${isOwnerMode
@@ -1305,6 +1322,69 @@ export default function App() {
         onExport={handleExportBackup}
         onImport={handleImportBackup}
       />
+
+      {isSalesHistoryHelpOpen && (
+        <div
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999]"
+          onClick={() => setIsSalesHistoryHelpOpen(false)}
+        >
+          <div
+            className="bg-background border border-border rounded-lg w-[560px] p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-xl font-bold mb-4">
+              販売履歴とは？
+            </h2>
+
+            <div className="space-y-4 text-sm">
+              <div>
+                <h3 className="text-primary font-semibold mb-1">
+                  何の機能か
+                </h3>
+
+                <p className="text-muted-foreground">
+                  販売履歴を確認・検索できる機能です。
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-primary font-semibold mb-1">
+                  できること
+                </h3>
+
+                <ul className="space-y-1 text-muted-foreground">
+                  <li>✓ 販売履歴確認</li>
+                  <li>✓ 商品検索</li>
+                  <li>✓ 期間検索</li>
+                  <li>✓ 販売種別検索</li>
+                  <li>✓ CSV出力</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-primary font-semibold mb-1">
+                  注意事項
+                </h3>
+
+                <p className="text-muted-foreground">
+                  履歴データは売上集計に利用されます。
+                </p>
+
+                <p className="text-muted-foreground mt-2">
+                  重要なデータはバックアップ取得を推奨します。
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setIsSalesHistoryHelpOpen(false)}
+              className="w-full mt-6 py-3 rounded-lg bg-primary text-primary-foreground"
+            >
+              閉じる
+            </button>
+          </div>
+        </div>
+      )}
 
       <TestModeModal
         isOpen={isTestModeOpen}
