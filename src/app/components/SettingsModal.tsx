@@ -1,5 +1,6 @@
 import { X, Package, QrCode, Layers, Database, Archive, FileText, Shield, Key, FlaskConical, HelpCircle, Trash2, Palette } from "lucide-react";
 import { SettingsCard } from "./SettingsCard";
+import { useState } from "react";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -38,6 +39,7 @@ export function SettingsModal({
   onOpenReset,
   onOpenTheme,
 }: SettingsModalProps) {
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
   if (!isOpen) return null;
 
   const handleCardClick = (requiresOwner: boolean, action: () => void) => {
@@ -59,6 +61,7 @@ export function SettingsModal({
   };
 
   return (
+    <>
     <div
       className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
       onClick={onClose}
@@ -85,7 +88,18 @@ export function SettingsModal({
         )}
         <div className="flex items-center justify-between p-6 border-b border-border">
           <div>
-            <h2 className="mb-1">設定</h2>
+            <div className="flex items-center gap-3">
+              <h2 className="mb-1">設定</h2>
+
+              <button
+                type="button"
+                onClick={() => setIsAboutOpen(true)}
+                className="text-sm text-primary hover:opacity-80"
+              >
+                About Liveppon
+              </button>
+            </div>
+
             <p className="text-sm text-muted-foreground">
               Livepponの管理・保存・練習・オーナー設定を行います
             </p>
@@ -216,5 +230,78 @@ export function SettingsModal({
         </div>
       </div>
     </div>
+
+  {isAboutOpen && (
+      <div
+        className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999]"
+        onClick={() => setIsAboutOpen(false)}
+      >
+        <div
+          className="bg-background border border-border rounded-lg w-[700px] max-h-[85vh] overflow-y-auto p-6"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h2 className="text-xl font-bold mb-6">
+            About Liveppon
+          </h2>
+
+          <div className="space-y-6">
+
+            <div>
+              <h3 className="text-primary font-semibold mb-2">
+                Version
+              </h3>
+              <p className="text-muted-foreground">
+                β版
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-primary font-semibold mb-2">
+                Developer
+              </h3>
+              <p className="text-muted-foreground">
+                LOCO design
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-primary font-semibold mb-2">
+                利用規約
+              </h3>
+
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p>LivepponはPOS補助アプリです。</p>
+                <p>決済代行サービスではありません。</p>
+                <p>商品の受け渡し、決済確認、現金管理、在庫管理、データ管理その他の運営上の判断については、利用者の責任で行ってください。</p>
+                <p>重要なデータは定期的にバックアップしてください。</p>
+                <p>本アプリは現状有姿で提供されます。</p>
+                <p>本アプリの利用または利用できなかったことにより発生した損害について、開発者は責任を負いません。</p>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-primary font-semibold mb-2">
+                QRコード利用時の注意
+              </h3>
+
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p>Livepponは決済代行サービスではありません。</p>
+                <p>QRコード決済を利用する場合は、ご自身で契約している決済サービスの加盟店QRコードをご利用ください。</p>
+                <p>QRコードの利用・公開方法については、各サービスの利用規約に従ってください。</p>
+              </div>
+            </div>
+
+          </div>
+
+          <button
+            onClick={() => setIsAboutOpen(false)}
+            className="w-full mt-8 py-3 bg-primary text-primary-foreground rounded-lg"
+          >
+            閉じる
+          </button>
+        </div>
+      </div>
+    )}
+  </>
   );
 }
