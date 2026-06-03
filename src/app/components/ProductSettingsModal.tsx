@@ -28,6 +28,7 @@ export function ProductSettingsModal({
   const [originalProduct, setOriginalProduct] = useState<Product | null>(null);
   const [isCSVImportOpen, setIsCSVImportOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showHelp, setShowHelp] = useState(false);
 
   if (!isOpen) return null;
 
@@ -186,7 +187,16 @@ export function ProductSettingsModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-6 border-b border-border">
-          <h2>商品設定</h2>
+          <div className="flex items-center gap-2">
+            <h2>商品設定</h2>
+            <button
+              type="button"
+              onClick={() => setShowHelp(true)}
+              className="text-primary hover:text-primary/80"
+            >
+              ⓘ
+            </button>
+          </div>
           <button
             onClick={onClose}
             className="w-10 h-10 rounded-lg hover:bg-secondary flex items-center justify-center"
@@ -359,6 +369,7 @@ export function ProductSettingsModal({
             </div>
           ) : (
             <>
+
               <div className="mb-4 p-4 bg-card rounded-lg">
                 <label className="text-sm text-muted-foreground mb-2 block">
                   在庫アラート設定
@@ -445,6 +456,54 @@ export function ProductSettingsModal({
         onClose={() => setIsCSVImportOpen(false)}
         onImport={handleCSVImport}
       />
+
+      {showHelp && (
+        <div
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+          onClick={() => setShowHelp(false)}
+        >
+          <div
+            className="bg-background border border-border rounded-lg w-[520px] p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="mb-4">商品設定とは？</h2>
+
+            <div className="space-y-4 text-sm">
+              <div>
+                <h3 className="text-primary mb-1">何の機能か</h3>
+                <p className="text-muted-foreground">
+                  Livepponで販売する商品を管理する機能です。
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-primary mb-1">できること</h3>
+                <ul className="text-muted-foreground space-y-1">
+                  <li>✓ 商品登録</li>
+                  <li>✓ 商品編集</li>
+                  <li>✓ CSV一括登録</li>
+                  <li>✓ 在庫アラート設定</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-primary mb-1">注意事項</h3>
+                <p className="text-muted-foreground">
+                  CSVインポート前は、バックアップ取得を推奨します。
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowHelp(false)}
+              className="w-full mt-6 py-3 bg-primary text-primary-foreground rounded-lg"
+            >
+              閉じる
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
