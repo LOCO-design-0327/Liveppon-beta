@@ -127,9 +127,10 @@ export default function App() {
   const [filterDateTo, setFilterDateTo] = useState("");
 
   const [isSalesHistoryHelpOpen, setIsSalesHistoryHelpOpen] = useState(false);
+  const [isOwnerMode, setIsOwnerMode] = useState(false);
+  const [isOwnerModeMenuOpen, setIsOwnerModeMenuOpen] = useState(false); 
 
   const [ownerPin, setOwnerPin] = useLocalStorage<string>("ownerPin", "123456");
-  const [isOwnerMode, setIsOwnerMode] = useState(false);
   const [isTestMode, setIsTestMode] = useState(false);
   const [qrCodeImage, setQrCodeImage] = useLocalStorage<string | undefined>("qrCodeImage", undefined);
   const [scenes, setScenes] = useLocalStorage<any[]>("scenes", []);
@@ -761,10 +762,13 @@ export default function App() {
             操作ガイド
           </button>
           {isOwnerMode && (
-            <div className="px-3 py-1 rounded-lg bg-primary/20 text-primary flex items-center gap-2">
+            <button
+              onClick={() => setIsOwnerModeMenuOpen(true)}
+              className="px-3 py-1 rounded-lg bg-primary/20 flex items-center gap-2 hover:bg-primary/30"
+            >
               <Shield className="w-4 h-4" />
               <span className="text-sm">オーナーモード</span>
-            </div>
+            </button>
           )}
           <button
             onClick={() => setIsSettingsOpen(true)}

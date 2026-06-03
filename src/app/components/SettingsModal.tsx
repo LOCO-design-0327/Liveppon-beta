@@ -40,9 +40,8 @@ export function SettingsModal({
   onOpenTheme,
 }: SettingsModalProps) {
   const [isAboutOpen, setIsAboutOpen] = useState(false);
-  if (!isOpen) return null;
-
   const [isOwnerModeInfoOpen, setIsOwnerModeInfoOpen] = useState(false);
+  if (!isOpen) return null;
 
   const handleCardClick = (requiresOwner: boolean, action: () => void) => {
     if (requiresOwner && !isOwnerMode) {
