@@ -107,10 +107,17 @@ export function BackupModal({
             データの保存・復元ができます。
           </p>
 
-          <div className="text-sm text-gray-400">
-            {lastBackupAt
-              ? `最終バックアップ：${new Date(lastBackupAt).toLocaleString("ja-JP")}`
-              : "最終バックアップ：未保存"}
+          <div className="text-sm">
+            {lastBackupAt ? (
+              <span className="text-green-400">
+                ✓ 最終バックアップ：
+                {new Date(lastBackupAt).toLocaleString("ja-JP")}
+              </span>
+            ) : (
+              <span className="text-yellow-400">
+                ⚠ バックアップ未保存
+              </span>
+            )}
           </div>
 
           <button
