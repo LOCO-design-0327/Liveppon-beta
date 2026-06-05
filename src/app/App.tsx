@@ -93,6 +93,11 @@ export default function App() {
     },
   ]);
 
+  const [lastBackupAt, setLastBackupAt] = useLocalStorage<string | null>(
+  "lastBackupAt",
+  null
+);
+
   const [cart, setCart] = useState<CartItem[]>([]);
   const [sales, setSales] = useLocalStorage<Sale[]>("sales", []);
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "qr">("cash");
@@ -440,6 +445,7 @@ export default function App() {
 
   const handleExportBackup = () => {
     addOperationLog("バックアップ書き出し", "データをエクスポートしました");
+    setLastBackupAt(new Date().toISOString());
     return {
       version: "1.0",
       exportDate: new Date().toISOString(),
@@ -1339,6 +1345,7 @@ export default function App() {
         }}
         onExport={handleExportBackup}
         onImport={handleImportBackup}
+        lastBackupAt={lastBackupAt}
       />
 
       {isSalesHistoryHelpOpen && (

@@ -17,6 +17,7 @@ interface BackupModalProps {
   onClose: () => void;
   onExport: () => BackupData;
   onImport: (data: BackupData) => void;
+  lastBackupAt: string | null;
 }
 
 export function BackupModal({
@@ -24,6 +25,7 @@ export function BackupModal({
   onClose,
   onExport,
   onImport,
+  lastBackupAt,
 }: BackupModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showHelp, setShowHelp] = useState(false);
@@ -104,6 +106,12 @@ export function BackupModal({
           <p className="text-xs text-muted-foreground">
             データの保存・復元ができます。
           </p>
+
+          <div className="text-sm text-gray-400">
+            {lastBackupAt
+              ? `最終バックアップ：${new Date(lastBackupAt).toLocaleString("ja-JP")}`
+              : "最終バックアップ：未保存"}
+          </div>
 
           <button
             onClick={handleExport}
