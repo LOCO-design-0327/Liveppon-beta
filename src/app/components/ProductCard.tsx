@@ -76,7 +76,8 @@ export function ProductCard({
   };
 
   const isOutOfStock = stock === 0;
-  const isLowStock = stock > 0 && stock <= lowStockThreshold;
+  const isDangerStock = stock === 1;
+  const isLowStock = stock > 1 && stock <= lowStockThreshold;
 
   return (
     <div
@@ -120,13 +121,21 @@ export function ProductCard({
           <div className="text-lg">¥{price.toLocaleString()}</div>
           <div className="text-base">
             {isOutOfStock ? (
-              <span className="text-destructive font-bold">残り0</span>
+              <span className="text-destructive font-bold">
+                残り0
+              </span>
+            ) : isDangerStock ? (
+              <span className="px-2 py-1 bg-red-500/20 text-red-400 rounded font-bold">
+                残り{stock}
+              </span>
             ) : isLowStock ? (
               <span className="px-2 py-1 bg-warning/20 text-warning rounded font-bold">
                 残り{stock}
               </span>
             ) : (
-              <span className="text-foreground font-bold">残り{stock}</span>
+              <span className="text-foreground font-bold">
+                残り{stock}
+              </span>
             )}
           </div>
         </div>
