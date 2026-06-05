@@ -155,6 +155,14 @@ export function CheckoutModal({
                     </div>
                   )}
                 </button>
+
+                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 text-center mb-4">
+                  <p className="text-yellow-400 text-sm font-medium">
+                    お客様の決済完了を確認してから
+                    <br />「決済完了」ボタンを押してください。
+                  </p>
+                </div>
+
                 <div className="text-center mb-8">
                   <div className="text-sm text-muted-foreground mb-2">
                     お支払い金額
