@@ -38,6 +38,7 @@ import { OnlineStatus } from "./components/OnlineStatus";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import type { Product, CartItem, Sale, ShippingItem } from "./types";
 
+
 export default function App() {
   const [currentTab, setCurrentTab] = useState<
     "sales" | "history" | "summary"
@@ -809,15 +810,24 @@ export default function App() {
                     </button>
                   ))}
                 </div>
-                <label className="flex items-center gap-2 cursor-pointer ml-auto whitespace-nowrap min-w-[130px] justify-end">
-                  <input
-                    type="checkbox"
-                    checked={hideOutOfStock}
-                    onChange={(e) => setHideOutOfStock(e.target.checked)}
-                    className="w-4 h-4 rounded border-border"
-                  />
-                  <span className="text-[13px]">在庫0を非表示</span>
-                </label>
+                <div className="flex items-center gap-3 ml-auto mr-1 whitespace-nowrap">
+                  <button
+                    type="button"
+                    onClick={() => setHideOutOfStock(!hideOutOfStock)}
+                    className={`relative inline-flex h-7 w-14 flex-shrink-0 items-center rounded-full transition-colors ${hideOutOfStock ? "bg-primary" : "bg-secondary"
+                      }`}
+                    aria-pressed={hideOutOfStock}
+                  >
+                    <span
+                      className={`inline-block h-5 w-5 rounded-full bg-white transition-transform ${hideOutOfStock ? "translate-x-8" : "translate-x-1"
+                        }`}
+                    />
+                  </button>
+
+                  <span className="text-sm text-foreground">
+                    在庫0を隠す
+                  </span>
+                </div>
               </div>
 
               {products.length === 0 ? (
