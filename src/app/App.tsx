@@ -94,9 +94,9 @@ export default function App() {
   ]);
 
   const [lastBackupAt, setLastBackupAt] = useLocalStorage<string | null>(
-  "lastBackupAt",
-  null
-);
+    "lastBackupAt",
+    null
+  );
 
   const [cart, setCart] = useState<CartItem[]>([]);
   const [sales, setSales] = useLocalStorage<Sale[]>("sales", []);
@@ -690,7 +690,15 @@ export default function App() {
     )}
       <header className="bg-card border-b border-border px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-8">
-          <h1 className="text-primary">Liveppon</h1>
+          <img
+            src={
+              themeMode === "dark"
+                ? "/liveppon-logo-dark.svg"
+                : "/liveppon-logo-light.svg"
+            }
+            alt="Liveppon"
+            className="h-8 w-auto"
+          />
 
           <nav className="flex gap-2">
             <button
