@@ -38,6 +38,8 @@ import { OnlineStatus } from "./components/OnlineStatus";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import type { Product, CartItem, Sale, ShippingItem } from "./types";
 
+import { AppInfoModal } from "./components/AppInfoModal";
+
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<
@@ -56,6 +58,7 @@ export default function App() {
       price: 3500,
       stock: 20,
       category: "アパレル",
+      imageUrl: "/sample-products/tshirt.png",
     },
     {
       id: "2",
@@ -63,6 +66,7 @@ export default function App() {
       price: 2000,
       stock: 15,
       category: "グッズ",
+      imageUrl: "/sample-products/towel.png",
     },
     {
       id: "3",
@@ -70,6 +74,7 @@ export default function App() {
       price: 800,
       stock: 3,
       category: "グッズ",
+      imageUrl: "/sample-products/badge.png",
     },
     {
       id: "4",
@@ -77,6 +82,7 @@ export default function App() {
       price: 1500,
       stock: 0,
       category: "メディア",
+      imageUrl: "/sample-products/cd.png",
     },
     {
       id: "5",
@@ -84,6 +90,7 @@ export default function App() {
       price: 5500,
       stock: 8,
       category: "アパレル",
+      imageUrl: "/sample-products/hoodie.png",
     },
     {
       id: "6",
@@ -91,6 +98,7 @@ export default function App() {
       price: 600,
       stock: 25,
       category: "グッズ",
+      imageUrl: "/sample-products/keychain.png",
     },
   ]);
 
@@ -104,6 +112,7 @@ export default function App() {
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "qr">("cash");
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isAppInfoOpen, setIsAppInfoOpen] = useState(false);
   const [isOwnerPinOpen, setIsOwnerPinOpen] = useState(false);
   const [isProductSettingsOpen, setIsProductSettingsOpen] = useState(false);
   const [isQRSettingsOpen, setIsQRSettingsOpen] = useState(false);
@@ -811,6 +820,9 @@ export default function App() {
                   ))}
                 </div>
                 <div className="flex items-center gap-3 ml-auto mr-1 whitespace-nowrap">
+                  <span className="text-sm text-foreground">
+                    在庫0を隠す
+                  </span>
                   <button
                     type="button"
                     onClick={() => setHideOutOfStock(!hideOutOfStock)}
@@ -823,10 +835,6 @@ export default function App() {
                         }`}
                     />
                   </button>
-
-                  <span className="text-sm text-foreground">
-                    在庫0を隠す
-                  </span>
                 </div>
               </div>
 
@@ -1310,6 +1318,12 @@ export default function App() {
         onOpenHelp={() => handleOpenHelp("settings")}
         onOpenReset={handleOpenReset}
         onOpenTheme={handleOpenTheme}
+        onOpenAppInfo={() => setIsAppInfoOpen(true)}
+      />
+
+      <AppInfoModal
+        isOpen={isAppInfoOpen}
+        onClose={() => setIsAppInfoOpen(false)}
       />
 
       <OwnerPinModal
@@ -1682,5 +1696,6 @@ export default function App() {
         onColorChange={setThemeColor}
       />
     </div>
+
   );
 }
