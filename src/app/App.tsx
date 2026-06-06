@@ -757,15 +757,25 @@ export default function App() {
     )}
       <header className="bg-card border-b border-border px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-8">
-          <img
-            src={
-              themeMode === "dark"
-                ? "/liveppon-logo-dark.svg"
-                : "/liveppon-logo-light.svg"
-            }
-            alt="Liveppon"
-            className="h-8 w-auto"
-          />
+
+
+          <button
+            type="button"
+            onClick={() => setIsAppInfoOpen(true)}
+            className="hover:opacity-80 transition-opacity"
+            aria-label="アプリ情報を開く"
+          >
+            <img
+              src={
+                themeMode === "dark"
+                  ? "/liveppon-logo-dark.svg"
+                  : "/liveppon-logo-light.svg"
+              }
+              alt="Liveppon"
+              className="h-8 w-auto"
+            />
+          </button>
+
 
           <nav className="flex gap-2">
             <button
