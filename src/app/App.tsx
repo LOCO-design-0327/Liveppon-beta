@@ -55,42 +55,42 @@ export default function App() {
       name: "オリジナルTシャツ",
       price: 3500,
       stock: 20,
-      category: "apparel",
+      category: "アパレル",
     },
     {
       id: "2",
       name: "ライブタオル",
       price: 2000,
       stock: 15,
-      category: "goods",
+      category: "グッズ",
     },
     {
       id: "3",
       name: "缶バッジセット",
       price: 800,
       stock: 3,
-      category: "goods",
+      category: "グッズ",
     },
     {
       id: "4",
       name: "特典CD",
       price: 1500,
       stock: 0,
-      category: "media",
+      category: "メディア",
     },
     {
       id: "5",
       name: "パーカー",
       price: 5500,
       stock: 8,
-      category: "apparel",
+      category: "アパレル",
     },
     {
       id: "6",
       name: "キーホルダー",
       price: 600,
       stock: 25,
-      category: "goods",
+      category: "グッズ",
     },
   ]);
 
@@ -147,7 +147,7 @@ export default function App() {
     []
   );
   const [themeMode, setThemeMode] = useLocalStorage<"dark" | "light">("themeMode", "dark");
-  const [themeColor, setThemeColor] = useLocalStorage<string>("themeColor", "#39ff14");
+  const [themeColor, setThemeColor] = useLocalStorage<string>("themeColor", "#06c56d");
   const [lowStockThreshold, setLowStockThreshold] = useLocalStorage<number>("lowStockThreshold", 5);
   const [pinModalAction, setPinModalAction] = useState<(() => void) | null>(
     null
