@@ -145,6 +145,8 @@ export default function App() {
   const [isOwnerMode, setIsOwnerMode] = useState(false);
   const [isOwnerModeMenuOpen, setIsOwnerModeMenuOpen] = useState(false);
 
+  const [isPortrait, setIsPortrait] = useState(false);
+
   const [ownerPin, setOwnerPin] = useLocalStorage<string>("ownerPin", "123456");
   const [isTestMode, setIsTestMode] = useState(false);
   const [qrCodeImage, setQrCodeImage] = useLocalStorage<string | undefined>("qrCodeImage", undefined);
@@ -169,6 +171,17 @@ export default function App() {
     root.style.setProperty("--accent", themeColor);
     root.style.setProperty("--ring", themeColor);
   }, [themeMode, themeColor]);
+
+  useEffect(() => {
+    const checkOrientation = () => {
+      setIsPortrait(window.innerHeight > window.innerWidth);
+    };
+    checkOrientation();
+    window.addEventListener("resize", checkOrientation);
+    return () => {
+      window.removeEventListener("resize", checkOrientation);
+    };
+  }, []);
 
   const addOperationLog = (
     operation: string,
@@ -685,6 +698,50 @@ export default function App() {
     const stockMatch = !hideOutOfStock || product.stock > 0;
     return categoryMatch && stockMatch;
   });
+
+  if (isPortrait) {
+    const isDarkMode = themeMode === "dark";
+
+    return (
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-8 text-center">
+        <img
+          src={
+            isDarkMode
+              ? "/liveppon-symbol-dark.svg"
+              : "/liveppon-symbol-light.svg"
+          }
+          alt="Liveppon"
+          className="h-20 w-auto mb-6"
+        />
+
+        <img
+          src={
+            isDarkMode
+              ? "/liveppon-logo-dark.svg"
+              : "/liveppon-logo-light.svg"
+          }
+          alt="Liveppon"
+          className="h-10 w-auto mb-6"
+        />
+
+        <p className="text-lg font-semibold mb-3">
+          横画面でご利用ください
+        </p>
+
+        <p className="text-sm text-muted-foreground leading-relaxed max-w-sm">
+          Livepponは現在、タブレット横画面での利用を前提に設計されています。
+          <br />
+          端末を横向きにしてご利用ください。
+        </p>
+
+        <p className="text-xs text-muted-foreground mt-6">
+          スマートフォン向けモデル「Liveppon Go」を開発中です。
+          <br />
+          今後のアップデートをお待ちください。
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 flex flex-col bg-background text-foreground overflow-hidden">      {isTestMode && (
