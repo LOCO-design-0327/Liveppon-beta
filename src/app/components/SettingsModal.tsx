@@ -41,6 +41,7 @@ export function SettingsModal({
 }: SettingsModalProps) {
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [isOwnerModeInfoOpen, setIsOwnerModeInfoOpen] = useState(false);
+  const isDarkMode = document.documentElement.classList.contains("dark");
   const [aboutPage, setAboutPage] = useState<
     "home"
     | "about"
@@ -107,7 +108,7 @@ export function SettingsModal({
                   onClick={() => setIsAboutOpen(true)}
                   className="text-sm text-primary hover:opacity-80"
                 >
-                  About Liveppon
+                  アプリ情報
                 </button>
               </div>
 
@@ -358,7 +359,30 @@ export function SettingsModal({
               {aboutPage === "home" && (
                 <>
                   <div className="rounded-lg border border-border bg-card p-4">
-                    <h3 className="text-primary font-semibold mb-2">Liveppon</h3>
+
+                    <div className="flex items-center gap-4 mb-4">
+                      <img
+                        src={
+                          isDarkMode
+                            ? "/liveppon-symbol-dark.svg"
+                            : "/liveppon-symbol-light.svg"
+                        }
+                        alt="Liveppon"
+                        className="h-16 w-auto mb-4"
+                      />
+
+                      <img
+                        src={
+                          isDarkMode
+                            ? "/liveppon-logo-dark.svg"
+                            : "/liveppon-logo-light.svg"
+                        }
+                        alt="Liveppon Logo"
+                        className="h-11 w-auto mb-4"
+                      />
+                    </div>
+
+                    {/*<h3 className="text-primary font-semibold mb-2">Liveppon</h3>*/}
                     <p className="text-sm text-muted-foreground">
                       ライブ物販を、もっとスマートに。
                     </p>
