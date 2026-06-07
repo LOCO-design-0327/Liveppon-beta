@@ -1,5 +1,5 @@
 import { useState } from "react";
-
+import { X, ChevronRight } from "lucide-react";
 
 interface AppInfoModalProps {
     isOpen: boolean;
@@ -55,7 +55,7 @@ export function AppInfoModal({
                         }}
                         className="w-10 h-10 rounded-lg hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
                     >
-                        ×
+                        <X className="h-6 w-6" />
                     </button>
                 </div>
 
@@ -104,14 +104,14 @@ export function AppInfoModal({
                                         className="w-full rounded-lg bg-secondary px-4 py-3 hover:bg-secondary/80 flex items-center justify-between"
                                     >
                                         <span>Livepponについて</span>
-                                        <span className="text-muted-foreground text-xl">›</span>
+                                        <ChevronRight className="h-5 w-5" />
                                     </button>
                                     <button
                                         onClick={() => setAboutPage("developer")}
                                         className="w-full rounded-lg bg-secondary px-4 py-3 hover:bg-secondary/80 flex items-center justify-between"
                                     >
                                         <span>開発者情報</span>
-                                        <span className="text-muted-foreground text-xl">›</span>
+                                        <ChevronRight className="h-5 w-5" />
                                     </button>
                                 </div>
                             </div>
@@ -124,14 +124,14 @@ export function AppInfoModal({
                                         className="w-full rounded-lg bg-secondary px-4 py-3 hover:bg-secondary/80 flex items-center justify-between"
                                     >
                                         <span>バックアップについて</span>
-                                        <span className="text-muted-foreground text-xl">›</span>
+                                        <ChevronRight className="h-5 w-5" />
                                     </button>
                                     <button
                                         onClick={() => setAboutPage("changelog")}
                                         className="w-full rounded-lg bg-secondary px-4 py-3 hover:bg-secondary/80 flex items-center justify-between"
                                     >
                                         <span>更新履歴</span>
-                                        <span className="text-muted-foreground text-xl">›</span>
+                                        <ChevronRight className="h-5 w-5" />
                                     </button>
                                 </div>
                             </div>
@@ -143,13 +143,13 @@ export function AppInfoModal({
                                         onClick={() => setAboutPage("terms")}
                                         className="w-full rounded-lg bg-secondary px-4 py-3 hover:bg-secondary/80 flex items-center justify-between">
                                         <span>利用規約</span>
-                                        <span className="text-muted-foreground text-xl">›</span>
+                                        <ChevronRight className="h-5 w-5" />
                                     </button>
                                     <button
                                         onClick={() => setAboutPage("qr")}
                                         className="w-full rounded-lg bg-secondary px-4 py-3 hover:bg-secondary/80 flex items-center justify-between">
                                         <span>QRコード利用時の注意</span>
-                                        <span className="text-muted-foreground text-xl">›</span>
+                                        <ChevronRight className="h-5 w-5" />
                                     </button>
                                 </div>
                             </div>
