@@ -11,10 +11,9 @@ interface ThemeModalProps {
 
 const themeColors = [
   "#06c56d",
-  "#00d4ff",
-  "#ff00ff",
-  "#ffaa00",
-  "#ff1493",
+  "#008fd0",
+  "#d82e66",
+  "#fc5c43",
 ];
 
 export function ThemeModal({
