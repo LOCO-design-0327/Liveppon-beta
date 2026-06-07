@@ -34,15 +34,13 @@ export function ThemeModal({
       <div className="bg-background border border-border rounded-lg w-[600px] max-h-[85vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-6 border-b border-border">
-          <div className="flex items-center gap-2">
-            <Palette className="w-6 h-6 text-primary" />
-            <h2>テーマ設定</h2>
-          </div>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">          <div className="flex items-center gap-2">
+          <Palette className="w-6 h-6 text-primary" />
+          <h2>テーマ設定</h2>
+        </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded hover:bg-secondary flex items-center justify-center"
-          >
+            className="w-10 h-10 rounded hover:bg-secondary flex items-center justify-center"          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -54,8 +52,8 @@ export function ThemeModal({
               <button
                 onClick={() => onThemeChange("dark")}
                 className={`p-4 rounded-lg border-2 transition-all ${currentTheme === "dark"
-                    ? "border-primary bg-primary/10"
-                    : "border-border hover:border-primary/50"
+                  ? "border-primary bg-primary/10"
+                  : "border-border hover:border-primary/50"
                   }`}
               >
                 <Moon className="w-8 h-8 mx-auto mb-2" />
@@ -65,8 +63,8 @@ export function ThemeModal({
               <button
                 onClick={() => onThemeChange("light")}
                 className={`p-4 rounded-lg border-2 transition-all ${currentTheme === "light"
-                    ? "border-primary bg-primary/10"
-                    : "border-border hover:border-primary/50"
+                  ? "border-primary bg-primary/10"
+                  : "border-border hover:border-primary/50"
                   }`}
               >
                 <Sun className="w-8 h-8 mx-auto mb-2" />
