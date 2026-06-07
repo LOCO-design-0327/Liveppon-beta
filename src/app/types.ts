@@ -2,6 +2,7 @@ export interface Product {
   id: string;
   name: string;
   price: number;
+  image?: string;
   stock: number;
   imageUrl?: string;
   category?: string;
@@ -12,6 +13,7 @@ export interface CartItem {
   id: string;
   name: string;
   price: number;
+  image?: string;
   quantity: number;
 }
 
