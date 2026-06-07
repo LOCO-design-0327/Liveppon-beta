@@ -71,10 +71,11 @@ export function BackupModal({
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
       onClick={onClose}
     >
-      <div className="bg-background border border-border rounded-lg w-[600px] p-6"
+      <div
+        className="bg-background border border-border rounded-lg w-[600px] max-h-[85vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div className="flex items-center gap-2">
             <Database className="w-6 h-6 text-primary" />
 
@@ -91,13 +92,13 @@ export function BackupModal({
 
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded hover:bg-secondary flex items-center justify-center"
+            className="w-10 h-10 rounded hover:bg-secondary flex items-center justify-center"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="space-y-1">
+        <div className="p-6 space-y-1">
           <p className="text-sm text-muted-foreground">
             本番前・本番後・大きな変更前に
             バックアップを保存してください。
@@ -159,14 +160,23 @@ export function BackupModal({
           onClick={() => setShowHelp(false)}
         >
           <div
-            className="bg-background border border-border rounded-lg w-[560px] p-6"
+            className="bg-background border border-border rounded-lg w-[600px] max-h-[85vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-xl font-bold mb-4">
-              バックアップとは？
-            </h2>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+              <h2 className="text-xl font-bold">
+                バックアップとは？
+              </h2>
 
-            <div className="space-y-4 text-sm">
+              <button
+                onClick={() => setShowHelp(false)}
+                className="w-10 h-10 rounded hover:bg-secondary flex items-center justify-center"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 text-sm">
               <div>
                 <h3 className="text-primary font-semibold mb-1">
                   何の機能か
