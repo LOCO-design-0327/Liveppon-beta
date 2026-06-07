@@ -59,23 +59,24 @@ export function PinChangeModal({
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
       onClick={onClose}
     >
-      <div className="bg-background border border-border rounded-lg w-[500px] p-6"
+      <div
+        className="bg-background border border-border rounded-lg w-[500px] max-h-[85vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div className="flex items-center gap-2">
             <Key className="w-6 h-6 text-primary" />
             <h2>PIN変更</h2>
           </div>
           <button
             onClick={handleClose}
-            className="w-8 h-8 rounded hover:bg-secondary flex items-center justify-center"
+            className="w-10 h-10 rounded hover:bg-secondary flex items-center justify-center"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="space-y-4">
+        <div className="p-6 space-y-4">
           <div>
             <label className="text-sm text-muted-foreground mb-2 block">
               現在のPIN
