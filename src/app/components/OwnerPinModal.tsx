@@ -61,24 +61,25 @@ export function OwnerPinModal({
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
       onClick={onClose}
+    >
+      <div
+        className="bg-background border border-border rounded-lg w-[400px] max-h-[85vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
       >
-      <div className="bg-background border border-border rounded-lg w-[400px] p-6"
-      onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div className="flex items-center gap-2">
             <KeyRound className="w-6 h-6 text-primary" />
             <h2>{title}</h2>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded hover:bg-secondary flex items-center justify-center"
+            className="w-10 h-10 rounded hover:bg-secondary flex items-center justify-center"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="mb-6">
+        <div className="p-6">
           <div className="text-center mb-4">
             <div className="text-sm text-muted-foreground mb-2">
               6桁のPINを入力してください
@@ -87,11 +88,10 @@ export function OwnerPinModal({
               {[0, 1, 2, 3, 4, 5].map((i) => (
                 <div
                   key={i}
-                  className={`w-10 h-10 rounded border-2 flex items-center justify-center ${
-                    pin.length > i
-                      ? "border-primary bg-primary/20"
-                      : "border-border"
-                  }`}
+                  className={`w-10 h-10 rounded border-2 flex items-center justify-center ${pin.length > i
+                    ? "border-primary bg-primary/20"
+                    : "border-border"
+                    }`}
                 >
                   {pin.length > i && (
                     <div className="w-3 h-3 rounded-full bg-primary" />
