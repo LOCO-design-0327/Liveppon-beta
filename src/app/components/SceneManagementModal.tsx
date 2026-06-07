@@ -65,10 +65,11 @@ export function SceneManagementModal({
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
       onClick={onClose}
     >
-      <div className="bg-background border border-border rounded-lg w-[700px] max-h-[80vh] flex flex-col"
+      <div
+        className="bg-background border border-border rounded-lg w-[700px] max-h-[85vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-6 border-b border-border">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div className="flex items-center gap-2">
             <Layers className="w-6 h-6 text-primary" />
 
@@ -85,7 +86,7 @@ export function SceneManagementModal({
 
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded hover:bg-secondary flex items-center justify-center"
+            className="w-10 h-10 rounded hover:bg-secondary flex items-center justify-center"
           >
             <X className="w-5 h-5" />
           </button>
@@ -202,72 +203,76 @@ export function SceneManagementModal({
         </div>
       </div>
 
-      {showHelp && (
-        <div
-          className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999]"
-          onClick={() => setShowHelp(false)}
-        >
+      {
+        showHelp && (
           <div
-            className="bg-background border border-border rounded-lg w-[520px] p-6"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999]"
+            onClick={() => setShowHelp(false)}
           >
-            <h2 className="text-xl font-bold mb-4">
-              シーン保存とは？
-            </h2>
-
-            <div className="space-y-4 text-sm">
-
-              <div>
-                <h3 className="text-primary font-semibold mb-1">
-                  何の機能か
-                </h3>
-
-                <p className="text-muted-foreground">
-                  商品構成を保存し、
-                  別イベント用に切り替えられる機能です。
-                </p>
-              </div>
-
-              <div>
-                <h3 className="text-primary font-semibold mb-1">
-                  できること
-                </h3>
-
-                <ul className="space-y-1 text-muted-foreground">
-                  <li>✓ 商品名</li>
-                  <li>✓ 商品画像</li>
-                  <li>✓ 価格</li>
-                  <li>✓ 在庫</li>
-                  <li>✓ カテゴリ</li>
-                  <li>✓ 並び順</li>
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="text-primary font-semibold mb-1">
-                  注意事項
-                </h3>
-
-                <ul className="space-y-1 text-muted-foreground">
-                  <li>✕ 販売履歴</li>
-                  <li>✕ 売上データ</li>
-                  <li>✕ カート内容</li>
-                  <li>✕ QR設定</li>
-                </ul>
-              </div>
-
-            </div>
-
-            <button
-              onClick={() => setShowHelp(false)}
-              className="w-full mt-6 py-3 rounded-lg bg-primary text-primary-foreground"
+            <div
+              className="bg-background border border-border rounded-lg w-[600px] max-h-[85vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
             >
-              閉じる
-            </button>
-          </div>
-        </div>
-      )}
 
-    </div>
+              <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+                <h2 className="text-xl font-bold">
+                  シーン保存とは？
+                </h2>
+
+                <button
+                  onClick={() => setShowHelp(false)}
+                  className="w-10 h-10 rounded hover:bg-secondary flex items-center justify-center"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4 text-sm">
+
+                <div>
+                  <h3 className="text-primary font-semibold mb-1">
+                    何の機能か
+                  </h3>
+
+                  <p className="text-muted-foreground">
+                    商品構成を保存し、
+                    別イベント用に切り替えられる機能です。
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-primary font-semibold mb-1">
+                    できること
+                  </h3>
+
+                  <ul className="space-y-1 text-muted-foreground">
+                    <li>✓ 商品名</li>
+                    <li>✓ 商品画像</li>
+                    <li>✓ 価格</li>
+                    <li>✓ 在庫</li>
+                    <li>✓ カテゴリ</li>
+                    <li>✓ 並び順</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="text-primary font-semibold mb-1">
+                    注意事項
+                  </h3>
+
+                  <ul className="space-y-1 text-muted-foreground">
+                    <li>✕ 販売履歴</li>
+                    <li>✕ 売上データ</li>
+                    <li>✕ カート内容</li>
+                    <li>✕ QR設定</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+    </div >
   );
 }
