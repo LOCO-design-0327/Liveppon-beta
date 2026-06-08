@@ -856,10 +856,10 @@ export default function App() {
           {isOwnerMode && (
             <button
               onClick={() => setIsOwnerModeMenuOpen(true)}
-              className="px-3 py-1 rounded-lg bg-primary/20 flex items-center gap-2 hover:bg-primary/30"
+              className="px-3 py-1 rounded-lg bg-primary/20 text-primary flex items-center gap-1"
             >
-              <Shield className="w-4 h-4" />
-              <span className="text-sm">オーナーモード</span>
+              <Shield className="w-4 h-4 text-primary" />
+              <span className="text-sm text-primary">オーナーモード</span>
             </button>
           )}
           <button
