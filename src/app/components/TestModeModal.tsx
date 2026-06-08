@@ -1,4 +1,5 @@
 import { X, FlaskConical, AlertCircle } from "lucide-react";
+import { useState } from "react";
 
 interface TestModeModalProps {
   isOpen: boolean;
@@ -13,12 +14,21 @@ export function TestModeModal({
   isTestMode,
   onToggleTestMode,
 }: TestModeModalProps) {
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
   if (!isOpen) return null;
 
-  const handleToggle = () => {
+  const handleStart = () => {
     onToggleTestMode();
     onClose();
   };
+
+  const handleExitConfirm = () => {
+    onToggleTestMode();
+    setShowExitConfirm(false);
+    onClose();
+  };
+
+
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
@@ -28,13 +38,14 @@ export function TestModeModal({
         className="bg-background border border-border rounded-lg w-[600px] max-h-[85vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">          <div className="flex items-center gap-2">
-          <FlaskConical className="w-6 h-6 text-primary" />
-          <h2>テストモード</h2>
-        </div>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <div className="flex items-center gap-2">
+            <FlaskConical className="w-6 h-6 text-primary" />
+            <h2>テストモード</h2>
+          </div>
           <button
             onClick={onClose}
-            className="w-10 h-10 rounded hover:bg-secondary flex items-center justify-center"          >
+            className="w-10 h-10 rounded hover:bg-secondary flex items-center justify-center">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -61,7 +72,7 @@ export function TestModeModal({
                 <p className="text-warning">現在テストモード中です</p>
               </div>
               <button
-                onClick={handleToggle}
+                onClick={() => setShowExitConfirm(true)}
                 className="w-full py-4 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90"
               >
                 テストモードを終了
@@ -69,7 +80,7 @@ export function TestModeModal({
             </div>
           ) : (
             <button
-              onClick={handleToggle}
+              onClick={handleStart}
               className="w-full py-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
             >
               テストモードを開始
@@ -83,6 +94,47 @@ export function TestModeModal({
             戻る
           </button>
         </div>
+
+        {showExitConfirm && (
+          <div
+            className="fixed inset-0 bg-black/70 flex items-center justify-center z-[60]"
+            onClick={() => setShowExitConfirm(false)}
+          >
+            <div
+              className="bg-background border border-border rounded-lg w-[500px]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="px-6 py-4 border-b border-border">
+                <h3 className="text-lg font-bold">
+                  テストモードを終了しますか？
+                </h3>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <p className="text-muted-foreground">
+                  テストモードを終了し、通常モードに戻ります。
+                </p>
+
+                <div className="flex gap-3 justify-end">
+                  <button
+                    onClick={() => setShowExitConfirm(false)}
+                    className="px-4 py-2 bg-secondary rounded-lg"
+                  >
+                    キャンセル
+                  </button>
+
+                  <button
+                    onClick={handleExitConfirm}
+                    className="px-4 py-2 bg-destructive text-destructive-foreground rounded-lg"
+                  >
+                    終了する
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
