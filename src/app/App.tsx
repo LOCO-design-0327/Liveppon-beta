@@ -38,6 +38,8 @@ import { OnlineStatus } from "./components/OnlineStatus";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import type { Product, CartItem, Sale, ShippingItem } from "./types";
 
+import { BeginnerIcon } from "../assets/icons/BeginnerIcon";
+
 import { AppInfoModal } from "./components/AppInfoModal";
 
 
@@ -891,14 +893,6 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-2">
-          <OnlineStatus />
-          <button
-            onClick={() => handleOpenHelp("guide")}
-            className="px-4 py-2 rounded-lg hover:bg-secondary flex items-center gap-2"
-          >
-            <BookOpen className="w-5 h-5" />
-            操作ガイド
-          </button>
           {isOwnerMode && (
             <button
               onClick={() => setIsOwnerModeMenuOpen(true)}
@@ -908,6 +902,25 @@ export default function App() {
               <span className="text-sm text-primary">オーナーモード</span>
             </button>
           )}
+
+          <OnlineStatus />
+
+          <button
+            onClick={() => handleOpenHelp("guide")}
+            title="操作ガイド"
+            aria-label="操作ガイド"
+            className="
+              w-10 h-10
+              rounded-full
+              bg-primary
+              hover:opacity-90
+              flex items-center justify-center
+              transition-all
+             "
+          >
+            <BeginnerIcon className="w-5 h-5 text-primary-foreground" />
+          </button>
+
           <button
             onClick={() => setIsSettingsOpen(true)}
             className="w-10 h-10 rounded-lg hover:bg-secondary flex items-center justify-center"

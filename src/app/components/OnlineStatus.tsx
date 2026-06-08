@@ -22,19 +22,19 @@ export function OnlineStatus() {
     <>
       <button
         onClick={() => setShowInfo(true)}
-        className={`flex items-center gap-1 px-2 py-1 rounded text-xs ${isOnline
-            ? "bg-green-500/20 text-green-400"
+        className={`flex items-center gap-1 px-3 py-1 rounded-lg text-sm font-medium ${isOnline
+            ? "bg-primary/20 text-primary"
             : "bg-orange-500/20 text-orange-400"
           }`}
       >
         {isOnline ? (
           <>
-            <Wifi className="w-3 h-3" />
+            <Wifi className="w-4 h-4" />
             <span>オンライン</span>
           </>
         ) : (
           <>
-            <WifiOff className="w-3 h-3" />
+            <WifiOff className="w-4 h-4" />
             <span>オフライン利用中</span>
           </>
         )}
