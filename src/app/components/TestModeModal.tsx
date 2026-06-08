@@ -1,5 +1,4 @@
 import { X, FlaskConical, AlertCircle } from "lucide-react";
-import { useState } from "react";
 
 interface TestModeModalProps {
   isOpen: boolean;
@@ -14,21 +13,12 @@ export function TestModeModal({
   isTestMode,
   onToggleTestMode,
 }: TestModeModalProps) {
-  const [showExitConfirm, setShowExitConfirm] = useState(false);
   if (!isOpen) return null;
 
-  const handleStart = () => {
+  const handleToggle = () => {
     onToggleTestMode();
     onClose();
   };
-
-  const handleExitConfirm = () => {
-    onToggleTestMode();
-    setShowExitConfirm(false);
-    onClose();
-  };
-
-
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
@@ -72,7 +62,7 @@ export function TestModeModal({
                 <p className="text-warning">現在テストモード中です</p>
               </div>
               <button
-                onClick={() => setShowExitConfirm(true)}
+                onClick={handleToggle}
                 className="w-full py-4 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90"
               >
                 テストモードを終了
@@ -80,7 +70,7 @@ export function TestModeModal({
             </div>
           ) : (
             <button
-              onClick={handleStart}
+              onClick={handleToggle}
               className="w-full py-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
             >
               テストモードを開始
@@ -94,47 +84,6 @@ export function TestModeModal({
             戻る
           </button>
         </div>
-
-        {showExitConfirm && (
-          <div
-            className="fixed inset-0 bg-black/70 flex items-center justify-center z-[60]"
-            onClick={() => setShowExitConfirm(false)}
-          >
-            <div
-              className="bg-background border border-border rounded-lg w-[500px]"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="px-6 py-4 border-b border-border">
-                <h3 className="text-lg font-bold">
-                  テストモードを終了しますか？
-                </h3>
-              </div>
-
-              <div className="p-6 space-y-4">
-                <p className="text-muted-foreground">
-                  テストモードを終了し、通常モードに戻ります。
-                </p>
-
-                <div className="flex gap-3 justify-end">
-                  <button
-                    onClick={() => setShowExitConfirm(false)}
-                    className="px-4 py-2 bg-secondary rounded-lg"
-                  >
-                    キャンセル
-                  </button>
-
-                  <button
-                    onClick={handleExitConfirm}
-                    className="px-4 py-2 bg-destructive text-destructive-foreground rounded-lg"
-                  >
-                    終了する
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
       </div>
     </div>
   );
