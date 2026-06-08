@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 
 interface ProductCardProps {
   id: string;
@@ -23,40 +23,40 @@ export function ProductCard({
   onUpdateQuantity,
 }: ProductCardProps) {
   const [showQuantityAdjust, setShowQuantityAdjust] = useState(false);
-  const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null); const lastInteractionRef = useRef<number>(Date.now());
 
-  useEffect(() => {
-    if (showQuantityAdjust) {
-      const checkInactivity = setInterval(() => {
-        if (Date.now() - lastInteractionRef.current >= 2000) {
-          setShowQuantityAdjust(false);
-          clearInterval(checkInactivity);
-        }
-      }, 100);
+  const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressTriggeredRef = useRef(false);
+  const quantityRepeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-      return () => clearInterval(checkInactivity);
+  const handleClick = () => {
+    if (longPressTriggeredRef.current) {
+      longPressTriggeredRef.current = false;
+      return;
     }
-  }, [showQuantityAdjust]);
 
-  const handleTouchStart = () => {
+    if (!showQuantityAdjust && stock > 0) {
+      onAdd();
+    }
+  };
+
+  const handlePressStart = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (stock <= 0 || cartQuantity <= 0) return;
+
+    longPressTriggeredRef.current = false;
+
     pressTimerRef.current = setTimeout(() => {
-      if (stock > 0 && cartQuantity > 0) {
-        setShowQuantityAdjust(true);
-        lastInteractionRef.current = Date.now();
-      }
+      longPressTriggeredRef.current = true;
+      setShowQuantityAdjust(true);
     }, 500);
   };
 
-  const handleTouchEnd = () => {
+  const handlePressEnd = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+
     if (pressTimerRef.current) {
       clearTimeout(pressTimerRef.current);
       pressTimerRef.current = null;
-    }
-  };
-
-  const handleClick = () => {
-    if (!showQuantityAdjust && stock > 0) {
-      onAdd();
     }
   };
 
@@ -68,10 +68,26 @@ export function ProductCard({
       onUpdateQuantity(safeChange);
     }
 
-    lastInteractionRef.current = Date.now();
-
     if (nextQuantity === 0) {
+      stopQuantityRepeat();
       setShowQuantityAdjust(false);
+    }
+  };
+
+  const startQuantityRepeat = (change: number) => {
+    stopQuantityRepeat();
+
+    handleQuantityChange(change);
+
+    quantityRepeatRef.current = setInterval(() => {
+      handleQuantityChange(change);
+    }, 100);
+  };
+
+  const stopQuantityRepeat = () => {
+    if (quantityRepeatRef.current) {
+      clearInterval(quantityRepeatRef.current);
+      quantityRepeatRef.current = null;
     }
   };
 
@@ -86,11 +102,10 @@ export function ProductCard({
         : "bg-card cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
         }`}
       onClick={handleClick}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      onMouseDown={handleTouchStart}
-      onMouseUp={handleTouchEnd}
-      onMouseLeave={handleTouchEnd}
+      onPointerDown={handlePressStart}
+      onPointerUp={handlePressEnd}
+      onPointerCancel={handlePressEnd}
+      onPointerLeave={handlePressEnd}
     >
       {isOutOfStock && (
         <div className="absolute top-0 left-0 w-0 h-0 border-l-[40px] border-l-destructive border-t-[40px] border-t-destructive border-r-[40px] border-r-transparent border-b-[40px] border-b-transparent z-10">
@@ -142,54 +157,77 @@ export function ProductCard({
       </div>
 
       {cartQuantity > 0 && (
-        <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full min-w-[32px] h-8 px-2 flex items-center justify-center text-base font-bold z-20">
-          {cartQuantity}
-        </div>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowQuantityAdjust((prev) => !prev);
+          }}
+          onTouchStart={(e) => {
+            e.stopPropagation();
+          }}
+          onTouchEnd={(e) => {
+            e.stopPropagation();
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+          }}
+          onMouseUp={(e) => {
+            e.stopPropagation();
+          }}
+          className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full min-w-[32px] h-8 px-2 flex items-center justify-center text-base font-bold z-40"
+        >
+          {showQuantityAdjust ? "✓" : cartQuantity}
+        </button>
       )}
 
       {showQuantityAdjust && (
-        <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-30">
-          <div className="flex flex-col gap-2 items-center">
+        <div
+          className="absolute inset-0 bg-black/50 flex items-center justify-center z-30"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center gap-2 bg-primary text-primary-foreground rounded-full px-3 py-2 shadow-lg">
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                handleQuantityChange(10);
               }}
-              className="w-16 h-10 bg-secondary hover:bg-secondary/80 rounded-lg text-sm"
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                startQuantityRepeat(-1);
+              }}
+              onMouseUp={stopQuantityRepeat}
+              onMouseLeave={stopQuantityRepeat}
+              onTouchStart={(e) => {
+                e.stopPropagation();
+                startQuantityRepeat(-1);
+              }}
+              onTouchEnd={stopQuantityRepeat}
+              className="w-8 h-8 rounded-full border border-primary-foreground/70 flex items-center justify-center text-xl leading-none"
             >
-              +10
+              −
             </button>
-            <div className="flex gap-2 items-center">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleQuantityChange(-1);
-                }}
-                className="w-12 h-12 bg-secondary hover:bg-secondary/80 rounded-lg"
-              >
-                -1
-              </button>
-              <div className="w-12 h-12 bg-primary text-primary-foreground rounded-lg flex items-center justify-center font-bold">
-                {cartQuantity}
-              </div>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleQuantityChange(1);
-                }}
-                className="w-12 h-12 bg-secondary hover:bg-secondary/80 rounded-lg"
-              >
-                +1
-              </button>
+
+            <div className="min-w-[24px] text-center text-2xl font-bold">
+              {cartQuantity}
             </div>
+
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                handleQuantityChange(-10);
               }}
-              className="w-16 h-10 bg-secondary hover:bg-secondary/80 rounded-lg text-sm"
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                startQuantityRepeat(1);
+              }}
+              onMouseUp={stopQuantityRepeat}
+              onMouseLeave={stopQuantityRepeat}
+              onTouchStart={(e) => {
+                e.stopPropagation();
+                startQuantityRepeat(1);
+              }}
+              onTouchEnd={stopQuantityRepeat}
+              className="w-8 h-8 rounded-full border border-primary-foreground/70 flex items-center justify-center text-xl leading-none"
             >
-              -10
+              +
             </button>
           </div>
         </div>
