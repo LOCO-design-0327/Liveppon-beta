@@ -17,12 +17,24 @@ export function OnlineStatus() {
     };
   }, []);
 
-  if (isOnline) return null;
-
   return (
-    <div className="flex items-center gap-1 px-2 py-1 bg-destructive/20 text-destructive rounded text-xs">
-      <WifiOff className="w-3 h-3" />
-      <span>オフライン</span>
+    <div
+      className={`flex items-center gap-1 px-2 py-1 rounded text-xs ${isOnline
+          ? "bg-green-500/20 text-green-400"
+          : "bg-orange-500/20 text-orange-400"
+        }`}
+    >
+      {isOnline ? (
+        <>
+          <Wifi className="w-3 h-3" />
+          <span>オンライン</span>
+        </>
+      ) : (
+        <>
+          <WifiOff className="w-3 h-3" />
+          <span>オフライン利用中</span>
+        </>
+      )}
     </div>
   );
 }
