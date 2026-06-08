@@ -244,7 +244,7 @@ export function SettingsModal({
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-xl font-bold mb-4">
-              オーナーモードとは？
+              {isOwnerMode ? "オーナーモード中です" : "オーナーモードとは？"}
             </h2>
 
             <div className="space-y-4 text-sm">
@@ -253,7 +253,9 @@ export function SettingsModal({
                   何の機能か
                 </h3>
                 <p className="text-muted-foreground">
-                  重要な設定やデータ管理機能をPINで保護する機能です。
+                  {isOwnerMode
+                    ? "現在オーナーモードが有効です。重要な設定やデータ管理機能を利用できます。"
+                    : "重要な設定やデータ管理機能をPINで保護する機能です。"}
                 </p>
               </div>
 
@@ -276,8 +278,11 @@ export function SettingsModal({
                   注意事項
                 </h3>
                 <p className="text-muted-foreground">
-                  PINを忘れると管理機能を利用できません。
+                  {isOwnerMode
+                    ? "作業が終わったら、必要に応じてオーナーモードを終了してください。"
+                    : "PINを忘れると管理機能を利用できません。"}
                 </p>
+
                 <p className="text-muted-foreground mt-2">
                   イベント中の誤操作防止のため、管理者のみ利用してください。
                 </p>
@@ -290,9 +295,12 @@ export function SettingsModal({
                   setIsOwnerModeInfoOpen(false);
                   handleOwnerModeToggle();
                 }}
-                className="flex-1 py-3 rounded-lg bg-primary text-primary-foreground"
+                className={`flex-1 py-3 rounded-lg ${isOwnerMode
+                  ? "bg-destructive text-destructive-foreground"
+                  : "bg-primary text-primary-foreground"
+                  }`}
               >
-                オーナーモード開始
+                {isOwnerMode ? "オーナーモード終了" : "オーナーモード開始"}
               </button>
 
               <button
