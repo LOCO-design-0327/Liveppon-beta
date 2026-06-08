@@ -98,9 +98,10 @@ export function SettingsModal({
                 <button
                   type="button"
                   onClick={onOpenAppInfo}
-                  className="text-sm text-primary hover:opacity-80"
+                  className="flex items-center gap-1 text-sm text-primary hover:opacity-80"
                 >
-                  アプリ情報
+                  <span>ⓘ</span>
+                  <span>アプリ情報</span>
                 </button>
               </div>
 
