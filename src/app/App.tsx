@@ -147,6 +147,8 @@ export default function App() {
 
   const [isPortrait, setIsPortrait] = useState(false);
 
+  const [showTestModeExitConfirm, setShowTestModeExitConfirm] = useState(false);
+
   const [ownerPin, setOwnerPin] = useLocalStorage<string>("ownerPin", "123456");
   const [isTestMode, setIsTestMode] = useState(false);
   const [qrCodeImage, setQrCodeImage] = useLocalStorage<string | undefined>("qrCodeImage", undefined);
@@ -749,13 +751,57 @@ export default function App() {
       <div className="bg-warning text-warning-foreground px-6 py-2 text-center flex items-center justify-center gap-4">
         <span>テストモード中 - 販売履歴に記録されません</span>
         <button
-          onClick={() => setIsTestMode(false)}
+          onClick={() => setShowTestModeExitConfirm(true)}
           className="px-3 py-1 bg-warning-foreground text-warning rounded text-sm hover:opacity-90"
         >
           終了
         </button>
       </div>
     )}
+
+      {showTestModeExitConfirm && (
+        <div
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100]"
+          onClick={() => setShowTestModeExitConfirm(false)}
+        >
+          <div
+            className="bg-background border border-border rounded-lg w-[500px]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-6 py-4 border-b border-border">
+              <h3 className="text-lg font-bold">
+                テストモードを終了しますか？
+              </h3>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <p className="text-muted-foreground">
+                テストモードを終了し、通常モードに戻ります。
+              </p>
+
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowTestModeExitConfirm(false)}
+                  className="px-4 py-2 bg-secondary rounded-lg"
+                >
+                  キャンセル
+                </button>
+
+                <button
+                  onClick={() => {
+                    setIsTestMode(false);
+                    setShowTestModeExitConfirm(false);
+                  }}
+                  className="px-4 py-2 bg-destructive text-destructive-foreground rounded-lg"
+                >
+                  終了する
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="bg-card border-b border-border px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-8">
 
