@@ -75,7 +75,7 @@ export function CartItem({
 
             <button
               onClick={onRemove}
-              className="w-7 h-7 rounded-full bg-destructive/30 hover:bg-destructive/40 flex items-center justify-center"
+              className="ml-6 w-7 h-7 rounded-full bg-destructive/30 hover:bg-destructive/40 flex items-center justify-center"
             >
               <Trash2 className="w-4 h-4 text-destructive" />
             </button>
