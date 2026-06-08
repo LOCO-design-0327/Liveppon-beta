@@ -84,6 +84,14 @@ export function OwnerPinModal({
             <div className="text-sm text-muted-foreground mb-2">
               6桁のPINを入力してください
             </div>
+
+            <div className="mb-4 rounded-lg bg-primary/10 border border-primary/20 px-3 py-2 text-sm">
+              <span className="font-bold text-primary">初期PIN：123456</span>
+              <span className="text-muted-foreground">
+                （後から変更できます）
+              </span>
+            </div>
+
             <div className="flex justify-center gap-2">
               {[0, 1, 2, 3, 4, 5].map((i) => (
                 <div
