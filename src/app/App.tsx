@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   ShoppingBag,
   History,
@@ -38,6 +38,7 @@ import { OnlineStatus } from "./components/OnlineStatus";
 import { SalesHistoryHelpModal } from "./components/SalesHistoryHelpModal";
 import { SummaryHelpModal } from "./components/SummaryHelpModal";
 import { OwnerModeInfoModal } from "./components/OwnerModeInfoModal";
+import { ToastNotification } from "./components/ToastNotification";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import type { Product, CartItem, Sale, ShippingItem } from "./types";
 import {
@@ -127,6 +128,17 @@ export default function App() {
   const [pinModalAction, setPinModalAction] = useState<(() => void) | null>(
     null
   );
+  const [toast, setToast] = useState<{ id: number; message: string } | null>(
+    null
+  );
+
+  const showToast = useCallback((message: string) => {
+    setToast({ id: Date.now(), message });
+  }, []);
+
+  const hideToast = useCallback(() => {
+    setToast(null);
+  }, []);
 
   useEffect(() => {
     let hasReplacement = false;
@@ -433,6 +445,7 @@ export default function App() {
     };
     setScenes([...scenes, newScene]);
     addOperationLog("シーン保存", `"${name}" を保存しました`);
+    showToast("シーンを保存しました");
   };
 
   const handleLoadScene = (scene: any) => {
@@ -451,6 +464,7 @@ export default function App() {
   const handleExportBackup = () => {
     addOperationLog("バックアップ書き出し", "データをエクスポートしました");
     setLastBackupAt(new Date().toISOString());
+    showToast("バックアップを保存しました");
     return {
       version: "1.0",
       exportDate: new Date().toISOString(),
@@ -1445,6 +1459,7 @@ export default function App() {
         products={products}
         onUpdateProducts={setProducts}
         onLogOperation={addOperationLog}
+        onShowToast={showToast}
         lowStockThreshold={lowStockThreshold}
         onUpdateLowStockThreshold={setLowStockThreshold}
       />
@@ -1614,6 +1629,12 @@ export default function App() {
         currentColor={themeColor}
         onThemeChange={setThemeMode}
         onColorChange={setThemeColor}
+      />
+
+      <ToastNotification
+        message={toast?.message ?? null}
+        toastId={toast?.id ?? 0}
+        onClose={hideToast}
       />
     </div>
 

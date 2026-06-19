@@ -12,6 +12,7 @@ interface ProductSettingsModalProps {
   products: Product[];
   onUpdateProducts: (products: Product[]) => void;
   onLogOperation?: (operation: string, content: string, before?: string, after?: string) => void;
+  onShowToast?: (message: string) => void;
   lowStockThreshold: number;
   onUpdateLowStockThreshold: (threshold: number) => void;
 }
@@ -22,6 +23,7 @@ export function ProductSettingsModal({
   products,
   onUpdateProducts,
   onLogOperation,
+  onShowToast,
   lowStockThreshold,
   onUpdateLowStockThreshold,
 }: ProductSettingsModalProps) {
@@ -65,6 +67,7 @@ export function ProductSettingsModal({
           `¥${editingProduct.price} / 在庫${editingProduct.stock}`
         );
       }
+      onShowToast?.("商品を登録しました");
     } else {
       onUpdateProducts(
         products.map((p) => (p.id === editingProduct.id ? editingProduct : p))
