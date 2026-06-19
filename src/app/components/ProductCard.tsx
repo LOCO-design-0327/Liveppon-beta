@@ -130,7 +130,9 @@ export function ProductCard({
       </div>
 
       <div className="p-3 h-[40%] flex flex-col justify-between">
-        <h3 className="line-clamp-2 text-left text-[12px]">{name}</h3>
+        <h3 className="truncate whitespace-nowrap text-left text-[12px]">
+          {name}
+        </h3>
 
         <div className="flex justify-between items-end mt-1">
           <div className="text-lg">¥{price.toLocaleString()}</div>

@@ -4,6 +4,8 @@ import type { Product } from "../types";
 import { CSVImportModal } from "./CSVImportModal";
 import { compressImage } from "../utils/imageCompression";
 
+const PRODUCT_NAME_MAX_LENGTH = 15;
+
 interface ProductSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -258,16 +260,22 @@ export function ProductSettingsModal({
               </div>
 
               <div>
-                <label className="text-sm text-muted-foreground mb-2 block">
-                  商品名
-                </label>
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <label className="text-sm text-muted-foreground">
+                    商品名
+                  </label>
+                  <span className="text-xs text-muted-foreground">
+                    15文字以内
+                  </span>
+                </div>
                 <input
                   type="text"
                   value={editingProduct.name}
+                  maxLength={PRODUCT_NAME_MAX_LENGTH}
                   onChange={(e) =>
                     setEditingProduct({
                       ...editingProduct,
-                      name: e.target.value,
+                      name: e.target.value.slice(0, PRODUCT_NAME_MAX_LENGTH),
                     })
                   }
                   className="w-full px-4 py-2 bg-card border border-border rounded-lg"
