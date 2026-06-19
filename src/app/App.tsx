@@ -10,6 +10,7 @@ import {
   Plus,
   Bell,
   Shield,
+  Edit,
 } from "lucide-react";
 import { ProductCard } from "./components/ProductCard";
 import { CartItem as CartItemComponent } from "./components/CartItem";
@@ -51,6 +52,9 @@ import { BeginnerIcon } from "../assets/icons/BeginnerIcon";
 
 import { AppInfoModal } from "./components/AppInfoModal";
 
+type PinModalPurpose = "owner" | "productSettingsShortcut";
+const ADMIN_MODE_DURATION_MS = 10 * 60 * 1000;
+
 export default function App() {
   const [currentTab, setCurrentTab] = useState<
     "sales" | "history" | "summary"
@@ -83,6 +87,10 @@ export default function App() {
   const [isAppInfoOpen, setIsAppInfoOpen] = useState(false);
   const [isOwnerPinOpen, setIsOwnerPinOpen] = useState(false);
   const [isProductSettingsOpen, setIsProductSettingsOpen] = useState(false);
+  const [
+    returnToSettingsAfterProductSettings,
+    setReturnToSettingsAfterProductSettings,
+  ] = useState(true);
   const [isQRSettingsOpen, setIsQRSettingsOpen] = useState(false);
   const [isSalesStyleOpen, setIsSalesStyleOpen] = useState(false);
   const [isSceneManagementOpen, setIsSceneManagementOpen] = useState(false);
@@ -119,6 +127,11 @@ export default function App() {
   const [showTestModeExitConfirm, setShowTestModeExitConfirm] = useState(false);
 
   const [ownerPin, setOwnerPin] = useLocalStorage<string>("ownerPin", "123456");
+  const [pinModalPurpose, setPinModalPurpose] =
+    useState<PinModalPurpose>("owner");
+  const [adminModeExpiresAt, setAdminModeExpiresAt] = useState<number | null>(
+    null
+  );
   const [isTestMode, setIsTestMode] = useState(false);
   const [qrCodeImage, setQrCodeImage] = useLocalStorage<string | undefined>("qrCodeImage", undefined);
   const [scenes, setScenes] = useLocalStorage<any[]>("scenes", []);
@@ -350,11 +363,20 @@ export default function App() {
   };
 
   const handleOwnerLogin = () => {
+    setPinModalPurpose("owner");
     setIsOwnerPinOpen(true);
   };
 
   const handleVerifyPin = (pin: string): boolean => {
     if (pin === ownerPin) {
+      if (pinModalPurpose === "productSettingsShortcut") {
+        setIsOwnerMode(true);
+        setAdminModeExpiresAt(Date.now() + ADMIN_MODE_DURATION_MS);
+        setIsOwnerPinOpen(false);
+        handleOpenProductSettingsFromShortcut();
+        return true;
+      }
+
       setIsOwnerMode(true);
       addOperationLog("オーナーログイン", "オーナーモードに入りました");
       setIsOwnerPinOpen(false);
@@ -376,8 +398,39 @@ export default function App() {
   };
 
   const handleOpenProductSettings = () => {
+    setReturnToSettingsAfterProductSettings(true);
     setIsSettingsOpen(false);
     setIsProductSettingsOpen(true);
+  };
+
+  const handleOpenProductSettingsFromShortcut = () => {
+    setReturnToSettingsAfterProductSettings(false);
+    setIsSettingsOpen(false);
+    setIsProductSettingsOpen(true);
+  };
+
+  const handleOpenProductSettingsShortcut = () => {
+    if (salesStyle === "team") {
+      if (
+        isOwnerMode &&
+        adminModeExpiresAt &&
+        Date.now() < adminModeExpiresAt
+      ) {
+        handleOpenProductSettingsFromShortcut();
+        return;
+      }
+
+      if (adminModeExpiresAt && Date.now() >= adminModeExpiresAt) {
+        setIsOwnerMode(false);
+        setAdminModeExpiresAt(null);
+      }
+
+      setPinModalPurpose("productSettingsShortcut");
+      setIsOwnerPinOpen(true);
+      return;
+    }
+
+    handleOpenProductSettingsFromShortcut();
   };
 
   const handleAddFirstProduct = () => {
@@ -960,7 +1013,7 @@ export default function App() {
       <main className="flex-1 overflow-hidden">
         {currentTab === "sales" && (
           <div className="h-full flex">
-            <div className="flex-1 p-6 overflow-y-auto">
+            <div className="flex-1 p-6 overflow-y-auto flex flex-col">
               <div className="mb-4 flex items-center gap-4">
                 <div className="flex gap-2 flex-wrap">
                   {categories.map((category) => (
@@ -992,48 +1045,62 @@ export default function App() {
                 </div>
               </div>
 
-              {products.length === 0 ? (
-                <div className="flex items-center justify-center h-full">
-                  <button
-                    onClick={handleAddFirstProduct}
-                    className="aspect-square w-64 bg-card hover:bg-card/80 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center gap-4 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                  >
-                    <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center">
-                      <Plus className="w-10 h-10 text-primary" />
-                    </div>
-                    <div className="text-center">
-                      <h3 className="mb-2">商品を追加</h3>
-                      <p className="text-sm text-muted-foreground px-4">
-                        商品がまだ登録されていません
-                        <br />
-                        タップして商品登録を始めます
-                      </p>
-                    </div>
-                  </button>
-                </div>
-              ) : filteredProducts.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  このカテゴリの商品はありません
-                </div>
-              ) : (
-                <div className="grid grid-cols-4 gap-4">
-                  {filteredProducts.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      {...product}
-                      cartQuantity={
-                        cart.find((item) => item.id === product.id)
-                          ?.quantity || 0
-                      }
-                      lowStockThreshold={lowStockThreshold}
-                      onAdd={() => addToCart(product.id)}
-                      onUpdateQuantity={(change) =>
-                        updateCartQuantity(product.id, change)
-                      }
-                    />
-                  ))}
-                </div>
-              )}
+              <div className="flex-1">
+                {products.length === 0 ? (
+                  <div className="flex items-center justify-center h-full">
+                    <button
+                      onClick={handleAddFirstProduct}
+                      className="aspect-square w-64 bg-card hover:bg-card/80 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center gap-4 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                    >
+                      <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center">
+                        <Plus className="w-10 h-10 text-primary" />
+                      </div>
+                      <div className="text-center">
+                        <h3 className="mb-2">商品を追加</h3>
+                        <p className="text-sm text-muted-foreground px-4">
+                          商品がまだ登録されていません
+                          <br />
+                          タップして商品登録を始めます
+                        </p>
+                      </div>
+                    </button>
+                  </div>
+                ) : filteredProducts.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    このカテゴリの商品はありません
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-4 gap-4">
+                    {filteredProducts.map((product) => (
+                      <ProductCard
+                        key={product.id}
+                        {...product}
+                        cartQuantity={
+                          cart.find((item) => item.id === product.id)
+                            ?.quantity || 0
+                        }
+                        lowStockThreshold={lowStockThreshold}
+                        onAdd={() => addToCart(product.id)}
+                        onUpdateQuantity={(change) =>
+                          updateCartQuantity(product.id, change)
+                        }
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-4 flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleOpenProductSettingsShortcut}
+                  className="w-10 h-10 rounded-full bg-primary text-primary-foreground hover:opacity-90 flex items-center justify-center transition-all active:scale-[0.96]"
+                  aria-label="商品管理を開く"
+                  title="商品管理"
+                >
+                  <Edit className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             <aside className="w-96 bg-card border-l border-border p-6 flex flex-col">
@@ -1486,6 +1553,11 @@ export default function App() {
         isOpen={isOwnerPinOpen}
         onClose={() => setIsOwnerPinOpen(false)}
         onVerify={handleVerifyPin}
+        title={
+          pinModalPurpose === "productSettingsShortcut"
+            ? "商品管理"
+            : undefined
+        }
       />
 
       <SalesStyleModal
@@ -1500,7 +1572,9 @@ export default function App() {
         isOpen={isProductSettingsOpen}
         onClose={() => {
           setIsProductSettingsOpen(false);
-          setIsSettingsOpen(true);
+          if (returnToSettingsAfterProductSettings) {
+            setIsSettingsOpen(true);
+          }
         }}
         products={products}
         onUpdateProducts={setProducts}
