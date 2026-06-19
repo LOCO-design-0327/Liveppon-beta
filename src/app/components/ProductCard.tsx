@@ -120,6 +120,7 @@ export function ProductCard({
           <img
             src={imageUrl}
             alt={name}
+            decoding="async"
             className="w-full h-full object-cover"
           />
         ) : (
