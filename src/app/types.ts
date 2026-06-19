@@ -8,6 +8,8 @@ export interface Product {
   deliveryType?: "immediate" | "shipping" | "other";
 }
 
+export type SalesStyle = "single" | "team";
+
 export interface CartItem {
   id: string;
   name: string;

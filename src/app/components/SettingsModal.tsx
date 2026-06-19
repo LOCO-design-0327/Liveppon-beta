@@ -1,13 +1,16 @@
-import { X, Package, QrCode, Layers, Database, Archive, FileText, Shield, Key, FlaskConical, HelpCircle, Trash2, Palette } from "lucide-react";
+import { X, Package, QrCode, Layers, Database, Archive, FileText, Shield, Key, FlaskConical, HelpCircle, Trash2, Palette, Users } from "lucide-react";
 import { SettingsCard } from "./SettingsCard";
 import { useState } from "react";
+import type { SalesStyle } from "../types";
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   isOwnerMode: boolean;
+  salesStyle: SalesStyle | null;
   onOwnerLogin: () => void;
   onOwnerLogout: () => void;
+  onOpenSalesStyle: () => void;
   onOpenProductSettings: () => void;
   onOpenQRSettings: () => void;
   onOpenSceneManagement: () => void;
@@ -26,8 +29,10 @@ export function SettingsModal({
   isOpen,
   onClose,
   isOwnerMode,
+  salesStyle,
   onOwnerLogin,
   onOwnerLogout,
+  onOpenSalesStyle,
   onOpenProductSettings,
   onOpenQRSettings,
   onOpenSceneManagement,
@@ -43,6 +48,12 @@ export function SettingsModal({
 }: SettingsModalProps) {
   const [isOwnerModeInfoOpen, setIsOwnerModeInfoOpen] = useState(false);
   const isDarkMode = document.documentElement.classList.contains("dark");
+  const salesStyleLabel =
+    salesStyle === "team"
+      ? "👥 複数スタッフで販売する"
+      : salesStyle === "single"
+        ? "👤 一人で販売する"
+        : "未設定";
 
   if (!isOpen) return null;
 
@@ -132,6 +143,12 @@ export function SettingsModal({
                   title="テストモード"
                   description="履歴に残さず練習"
                   onClick={onOpenTestMode}
+                />
+                <SettingsCard
+                  icon={Users}
+                  title="販売スタイル"
+                  description={salesStyleLabel}
+                  onClick={onOpenSalesStyle}
                 />
                 <SettingsCard
                   icon={Package}

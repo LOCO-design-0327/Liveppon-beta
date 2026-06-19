@@ -35,12 +35,13 @@ import { UnshippedItemsModal } from "./components/UnshippedItemsModal";
 import { NotificationPopover } from "./components/NotificationPopover";
 import { ThemeModal } from "./components/ThemeModal";
 import { OnlineStatus } from "./components/OnlineStatus";
+import { SalesStyleModal } from "./components/SalesStyleModal";
 import { SalesHistoryHelpModal } from "./components/SalesHistoryHelpModal";
 import { SummaryHelpModal } from "./components/SummaryHelpModal";
 import { OwnerModeInfoModal } from "./components/OwnerModeInfoModal";
 import { ToastNotification } from "./components/ToastNotification";
 import { useLocalStorage } from "./hooks/useLocalStorage";
-import type { Product, CartItem, Sale, ShippingItem } from "./types";
+import type { Product, CartItem, Sale, ShippingItem, SalesStyle } from "./types";
 import {
   INITIAL_PRODUCTS,
   SAMPLE_IMAGE_REPLACEMENTS,
@@ -59,6 +60,10 @@ export default function App() {
   const [hideOutOfStock, setHideOutOfStock] = useLocalStorage<boolean>(
     "hideOutOfStock",
     false
+  );
+  const [salesStyle, setSalesStyle] = useLocalStorage<SalesStyle | null>(
+    "salesStyle",
+    null
   );
   const [products, setProducts] = useLocalStorage<Product[]>(
     "products",
@@ -79,6 +84,7 @@ export default function App() {
   const [isOwnerPinOpen, setIsOwnerPinOpen] = useState(false);
   const [isProductSettingsOpen, setIsProductSettingsOpen] = useState(false);
   const [isQRSettingsOpen, setIsQRSettingsOpen] = useState(false);
+  const [isSalesStyleOpen, setIsSalesStyleOpen] = useState(false);
   const [isSceneManagementOpen, setIsSceneManagementOpen] = useState(false);
   const [isBackupOpen, setIsBackupOpen] = useState(false);
   const [isTestModeOpen, setIsTestModeOpen] = useState(false);
@@ -139,6 +145,31 @@ export default function App() {
   const hideToast = useCallback(() => {
     setToast(null);
   }, []);
+
+  const handleSelectSalesStyle = (style: SalesStyle) => {
+    const didChange = salesStyle !== style;
+
+    setSalesStyle(style);
+
+    if (isSalesStyleOpen) {
+      setIsSettingsOpen(true);
+    }
+
+    setIsSalesStyleOpen(false);
+
+    if (didChange) {
+      showToast(
+        style === "single"
+          ? "一人販売に変更しました"
+          : "複数スタッフ販売に変更しました"
+      );
+    }
+  };
+
+  const handleCloseSalesStyleSettings = () => {
+    setIsSalesStyleOpen(false);
+    setIsSettingsOpen(true);
+  };
 
   useEffect(() => {
     let hasReplacement = false;
@@ -378,6 +409,11 @@ export default function App() {
   const handleOpenTestMode = () => {
     setIsSettingsOpen(false);
     setIsTestModeOpen(true);
+  };
+
+  const handleOpenSalesStyle = () => {
+    setIsSettingsOpen(false);
+    setIsSalesStyleOpen(true);
   };
 
   const handleOpenPinChange = () => {
@@ -1423,8 +1459,10 @@ export default function App() {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         isOwnerMode={isOwnerMode}
+        salesStyle={salesStyle}
         onOwnerLogin={handleOwnerLogin}
         onOwnerLogout={handleOwnerLogout}
+        onOpenSalesStyle={handleOpenSalesStyle}
         onOpenProductSettings={handleOpenProductSettings}
         onOpenQRSettings={handleOpenQRSettings}
         onOpenSceneManagement={handleOpenSceneManagement}
@@ -1448,6 +1486,14 @@ export default function App() {
         isOpen={isOwnerPinOpen}
         onClose={() => setIsOwnerPinOpen(false)}
         onVerify={handleVerifyPin}
+      />
+
+      <SalesStyleModal
+        isOpen={salesStyle === null || isSalesStyleOpen}
+        onSelect={handleSelectSalesStyle}
+        onClose={
+          isSalesStyleOpen ? handleCloseSalesStyleSettings : undefined
+        }
       />
 
       <ProductSettingsModal
