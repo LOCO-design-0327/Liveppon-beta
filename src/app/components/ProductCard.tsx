@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Edit } from "lucide-react";
+import { Check, Edit, Trash2 } from "lucide-react";
 
 interface ProductCardProps {
   id: string;
@@ -11,9 +11,12 @@ interface ProductCardProps {
   lowStockThreshold?: number;
   isEditMode?: boolean;
   isSelectedForEdit?: boolean;
+  isDeleteMode?: boolean;
+  isSelectedForDelete?: boolean;
   onAdd: () => void;
   onUpdateQuantity: (change: number) => void;
   onSelectForEdit?: () => void;
+  onToggleDeleteSelect?: () => void;
 }
 
 export function ProductCard({
@@ -25,9 +28,12 @@ export function ProductCard({
   lowStockThreshold = 5,
   isEditMode = false,
   isSelectedForEdit = false,
+  isDeleteMode = false,
+  isSelectedForDelete = false,
   onAdd,
   onUpdateQuantity,
   onSelectForEdit,
+  onToggleDeleteSelect,
 }: ProductCardProps) {
   const [showQuantityAdjust, setShowQuantityAdjust] = useState(false);
 
@@ -43,6 +49,11 @@ export function ProductCard({
 
     if (isEditMode) {
       setShowQuantityAdjust(false);
+      if (isDeleteMode) {
+        onToggleDeleteSelect?.();
+        return;
+      }
+
       onSelectForEdit?.();
       return;
     }
@@ -111,13 +122,19 @@ export function ProductCard({
   const isOutOfStock = stock === 0;
   const isDangerStock = stock === 1;
   const isLowStock = stock > 1 && stock <= lowStockThreshold;
+  const cardHighlightClass =
+    isDeleteMode && isSelectedForDelete
+      ? "ring-2 ring-destructive"
+      : isSelectedForEdit && !isDeleteMode
+        ? "ring-2 ring-primary"
+        : "";
 
   return (
     <div
       className={`relative aspect-square rounded-lg overflow-hidden transition-all ${isOutOfStock && !isEditMode
         ? "bg-card/50 cursor-not-allowed opacity-60"
         : "bg-card cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
-        } ${isSelectedForEdit ? "ring-2 ring-primary" : ""}`}
+        } ${cardHighlightClass}`}
       onClick={handleClick}
       onPointerDown={handlePressStart}
       onPointerUp={handlePressEnd}
@@ -134,13 +151,27 @@ export function ProductCard({
 
       {isEditMode && (
         <div
-          className={`absolute top-2 right-2 z-40 rounded-full px-2 py-1 text-[11px] flex items-center gap-1 border ${isSelectedForEdit
-            ? "bg-primary text-primary-foreground border-primary"
-            : "bg-card/95 text-foreground border-primary/40"
+          className={`absolute top-2 right-2 z-40 rounded-full px-2 py-1 text-[11px] flex items-center gap-1 border ${isDeleteMode
+            ? isSelectedForDelete
+              ? "bg-destructive text-destructive-foreground border-destructive"
+              : "bg-card/95 text-muted-foreground border-muted-foreground/40"
+            : isSelectedForEdit
+              ? "bg-primary text-primary-foreground border-primary"
+              : "bg-card/95 text-foreground border-primary/40"
             }`}
         >
-          <Edit className="w-3 h-3" />
-          編集
+          {isDeleteMode ? (
+            <Trash2 className="w-3 h-3" />
+          ) : isSelectedForEdit ? (
+            <Check className="w-3 h-3" />
+          ) : (
+            <Edit className="w-3 h-3" />
+          )}
+          {isDeleteMode
+            ? "削除"
+            : isSelectedForEdit
+              ? "選択中"
+              : "編集"}
         </div>
       )}
 

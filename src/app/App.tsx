@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   ShoppingBag,
   History,
@@ -12,8 +12,15 @@ import {
   Shield,
   Edit,
   Check,
+  FileUp,
+  Trash2,
 } from "lucide-react";
 import { ProductCard } from "./components/ProductCard";
+import {
+  ProductEditPanel,
+  type ProductEditPanelHandle,
+} from "./components/ProductEditPanel";
+import { ProductDeletePanel } from "./components/ProductDeletePanel";
 import { CartItem as CartItemComponent } from "./components/CartItem";
 import { CheckoutModal } from "./components/CheckoutModal";
 import { SettingsModal } from "./components/SettingsModal";
@@ -42,6 +49,8 @@ import { SalesHistoryHelpModal } from "./components/SalesHistoryHelpModal";
 import { SummaryHelpModal } from "./components/SummaryHelpModal";
 import { OwnerModeInfoModal } from "./components/OwnerModeInfoModal";
 import { ToastNotification } from "./components/ToastNotification";
+import { UnsavedChangesConfirmModal } from "./components/UnsavedChangesConfirmModal";
+import { ProductDeleteConfirmModal } from "./components/ProductDeleteConfirmModal";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import type { Product, CartItem, Sale, ShippingItem, SalesStyle } from "./types";
 import {
@@ -56,6 +65,10 @@ import { AppInfoModal } from "./components/AppInfoModal";
 type PinModalPurpose = "owner" | "productEditModeShortcut";
 const ADMIN_MODE_DURATION_MS = 10 * 60 * 1000;
 type AppTab = "sales" | "history" | "summary";
+type PendingProductEditAction =
+  | { type: "selectProduct"; productId: string }
+  | { type: "exitEditMode" }
+  | { type: "changeTab"; tab: AppTab };
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<AppTab>("sales");
@@ -125,6 +138,15 @@ export default function App() {
   const [selectedEditingProductId, setSelectedEditingProductId] = useState<
     string | null
   >(null);
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
+  const [selectedDeleteProductIds, setSelectedDeleteProductIds] = useState<
+    string[]
+  >([]);
+  const [isProductDeleteConfirmOpen, setIsProductDeleteConfirmOpen] =
+    useState(false);
+  const [pendingProductEditAction, setPendingProductEditAction] =
+    useState<PendingProductEditAction | null>(null);
+  const productEditPanelRef = useRef<ProductEditPanelHandle>(null);
 
   const [isPortrait, setIsPortrait] = useState(false);
 
@@ -166,20 +188,149 @@ export default function App() {
   const resetProductEditMode = useCallback(() => {
     setIsProductEditMode(false);
     setSelectedEditingProductId(null);
+    setIsDeleteMode(false);
+    setSelectedDeleteProductIds([]);
+    setIsProductDeleteConfirmOpen(false);
+    setPendingProductEditAction(null);
   }, []);
 
   const startProductEditMode = useCallback(() => {
     setIsProductEditMode(true);
     setSelectedEditingProductId(null);
+    setIsDeleteMode(false);
+    setSelectedDeleteProductIds([]);
   }, []);
 
-  const handleChangeTab = (tab: AppTab) => {
-    if (tab !== currentTab) {
+  const hasUnsavedProductEditChanges = useCallback(
+    () => isProductEditMode && productEditPanelRef.current?.isDirty() === true,
+    [isProductEditMode]
+  );
+
+  const runProductEditAction = useCallback(
+    (action: PendingProductEditAction) => {
+      if (action.type === "selectProduct") {
+        setSelectedEditingProductId(action.productId);
+        return;
+      }
+
+      if (action.type === "exitEditMode") {
+        resetProductEditMode();
+        return;
+      }
+
       resetProductEditMode();
+      setCurrentTab(action.tab);
+      setSwipedSaleId(null);
+    },
+    [resetProductEditMode]
+  );
+
+  const requestProductEditAction = useCallback(
+    (action: PendingProductEditAction) => {
+      if (hasUnsavedProductEditChanges()) {
+        setPendingProductEditAction(action);
+        return;
+      }
+
+      runProductEditAction(action);
+    },
+    [hasUnsavedProductEditChanges, runProductEditAction]
+  );
+
+  const handleChangeTab = (tab: AppTab) => {
+    if (tab === currentTab) {
+      setSwipedSaleId(null);
+      return;
+    }
+
+    if (isProductEditMode) {
+      requestProductEditAction({ type: "changeTab", tab });
+      return;
     }
 
     setCurrentTab(tab);
     setSwipedSaleId(null);
+  };
+
+  const handleSelectProductForEdit = (productId: string) => {
+    if (selectedEditingProductId === productId) return;
+
+    requestProductEditAction({ type: "selectProduct", productId });
+  };
+
+  const handleToggleDeleteProductSelection = (productId: string) => {
+    setSelectedDeleteProductIds((prevIds) =>
+      prevIds.includes(productId)
+        ? prevIds.filter((id) => id !== productId)
+        : [...prevIds, productId]
+    );
+  };
+
+  const handleProductDeleteFabClick = () => {
+    if (!isDeleteMode) {
+      setIsDeleteMode(true);
+      setSelectedDeleteProductIds([]);
+      return;
+    }
+
+    setIsDeleteMode(false);
+    setSelectedDeleteProductIds([]);
+    setIsProductDeleteConfirmOpen(false);
+  };
+
+  const handleOpenProductDeleteConfirm = () => {
+    if (selectedDeleteProductIds.length === 0) return;
+    setIsProductDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDeleteProducts = () => {
+    if (selectedDeleteProductIds.length === 0) {
+      setIsProductDeleteConfirmOpen(false);
+      return;
+    }
+
+    const deleteIds = new Set(selectedDeleteProductIds);
+
+    setProducts((prevProducts) =>
+      prevProducts.filter((product) => !deleteIds.has(product.id))
+    );
+
+    if (
+      selectedEditingProductId &&
+      deleteIds.has(selectedEditingProductId)
+    ) {
+      setSelectedEditingProductId(null);
+    }
+
+    setSelectedDeleteProductIds([]);
+    setIsDeleteMode(false);
+    setIsProductDeleteConfirmOpen(false);
+    showToast("商品を削除しました");
+  };
+
+  const handleCancelProductEditAction = () => {
+    setPendingProductEditAction(null);
+  };
+
+  const handleDiscardProductEditAction = () => {
+    if (!pendingProductEditAction) return;
+
+    productEditPanelRef.current?.discardChanges();
+    const action = pendingProductEditAction;
+    setPendingProductEditAction(null);
+    runProductEditAction(action);
+  };
+
+  const handleSaveProductEditAction = () => {
+    if (!pendingProductEditAction) return;
+
+    const didSave = productEditPanelRef.current?.saveEditingProduct() ?? true;
+    const action = pendingProductEditAction;
+    setPendingProductEditAction(null);
+
+    if (!didSave) return;
+
+    runProductEditAction(action);
   };
 
   const handleSelectSalesStyle = (style: SalesStyle) => {
@@ -331,6 +482,15 @@ export default function App() {
     setCart(cart.filter((item) => item.id !== productId));
   };
 
+  const handleSaveProductFromEditPanel = (updatedProduct: Product) => {
+    setProducts((prevProducts) =>
+      prevProducts.map((product) =>
+        product.id === updatedProduct.id ? updatedProduct : product
+      )
+    );
+    showToast("商品情報を更新しました");
+  };
+
   const cartTotal = cart.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
@@ -437,7 +597,7 @@ export default function App() {
 
   const handleToggleProductEditMode = () => {
     if (isProductEditMode) {
-      resetProductEditMode();
+      requestProductEditAction({ type: "exitEditMode" });
       return;
     }
 
@@ -819,6 +979,10 @@ export default function App() {
     return categoryMatch && stockMatch;
   });
 
+  const selectedEditingProduct =
+    products.find((product) => product.id === selectedEditingProductId) ??
+    null;
+
   if (isPortrait) {
     const isDarkMode = themeMode === "dark";
 
@@ -1072,22 +1236,6 @@ export default function App() {
                   </div>
                 </div>
 
-                {isProductEditMode && (
-                  <div className="mb-4 rounded-lg border border-primary/30 bg-primary/10 px-4 py-3 text-primary">
-                    <div className="flex items-center gap-2">
-                      <Edit className="w-4 h-4" />
-                      <div>
-                        <div className="text-sm font-medium">
-                          商品編集モード
-                        </div>
-                        <div className="text-xs text-primary/80">
-                          編集したい商品を選択してください
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 <div className="flex-1">
                   {products.length === 0 ? (
                     <div className="flex items-center justify-center h-full">
@@ -1127,12 +1275,19 @@ export default function App() {
                           isSelectedForEdit={
                             selectedEditingProductId === product.id
                           }
+                          isDeleteMode={isDeleteMode}
+                          isSelectedForDelete={selectedDeleteProductIds.includes(
+                            product.id
+                          )}
                           onAdd={() => addToCart(product.id)}
                           onUpdateQuantity={(change) =>
                             updateCartQuantity(product.id, change)
                           }
                           onSelectForEdit={() =>
-                            setSelectedEditingProductId(product.id)
+                            handleSelectProductForEdit(product.id)
+                          }
+                          onToggleDeleteSelect={() =>
+                            handleToggleDeleteProductSelection(product.id)
                           }
                         />
                       ))}
@@ -1142,106 +1297,154 @@ export default function App() {
               </div>
 
               <div className="absolute bottom-6 right-6 z-50">
-                <button
-                  type="button"
-                  onClick={handleToggleProductEditMode}
-                  className="w-10 h-10 rounded-full bg-primary text-primary-foreground hover:opacity-90 flex items-center justify-center transition-all active:scale-[0.96]"
-                  aria-label={
-                    isProductEditMode
-                      ? "商品編集を終了"
-                      : "商品編集モードを開始"
-                  }
-                  title={
-                    isProductEditMode
-                      ? "商品編集を終了"
-                      : "商品編集モードを開始"
-                  }
-                >
-                  {isProductEditMode ? (
-                    <Check className="w-5 h-5" />
-                  ) : (
+                {isProductEditMode ? (
+                  <div className="flex flex-col gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {}}
+                      className="w-10 h-10 rounded-full bg-transparent border border-primary text-primary hover:bg-primary/10 flex items-center justify-center transition-all active:scale-[0.96]"
+                      aria-label="CSV"
+                      title="CSV"
+                    >
+                      <FileUp className="w-5 h-5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {}}
+                      className="w-10 h-10 rounded-full bg-transparent border border-primary text-primary hover:bg-primary/10 flex items-center justify-center transition-all active:scale-[0.96]"
+                      aria-label="商品追加"
+                      title="商品追加"
+                    >
+                      <Plus className="w-5 h-5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleProductDeleteFabClick}
+                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-[0.96] ${isDeleteMode
+                        ? "bg-destructive text-destructive-foreground hover:opacity-90"
+                        : "bg-transparent border border-destructive text-destructive hover:bg-destructive/10"
+                        }`}
+                      aria-label="削除"
+                      title="削除"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleToggleProductEditMode}
+                      className="w-10 h-10 rounded-full bg-primary text-primary-foreground hover:opacity-90 flex items-center justify-center transition-all active:scale-[0.96]"
+                      aria-label="商品編集を終了"
+                      title="商品編集を終了"
+                    >
+                      <Check className="w-5 h-5" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleToggleProductEditMode}
+                    className="w-10 h-10 rounded-full bg-transparent border border-primary text-primary hover:bg-primary/10 flex items-center justify-center transition-all active:scale-[0.96]"
+                    aria-label="商品編集モードを開始"
+                    title="商品編集モードを開始"
+                  >
                     <Edit className="w-5 h-5" />
-                  )}
-                </button>
+                  </button>
+                )}
               </div>
             </div>
 
             <aside className="w-96 bg-card border-l border-border p-6 flex flex-col">
-              <div className="flex items-center justify-between mb-4">
-                <h2>カート</h2>
-                {cart.length > 0 && (
-                  <button
-                    onClick={() => {
-                      if (confirm("カート内をクリアしますか？")) {
-                        setCart([]);
-                      }
-                    }}
-                    className="text-xs text-muted-foreground hover:text-destructive"
-                  >
-                    カート内をクリア
-                  </button>
-                )}
-              </div>
-
-              <div className="flex-1 overflow-y-auto space-y-2 mb-4">
-                {cart.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">
-                    カートが空です
-                  </p>
-                ) : (
-                  cart.map((item) => (
-                    <CartItemComponent
-                      key={item.id}
-                      {...item}
-                      onIncrease={() => updateCartQuantity(item.id, 1)}
-                      onDecrease={() => updateCartQuantity(item.id, -1)}
-                      onRemove={() => removeFromCart(item.id)}
-                    />
-                  ))
-                )}
-              </div>
-
-              <div className="space-y-4">
-                <div className="pt-4 border-t border-border">
-                  <div className="flex justify-between mb-4">
-                    <span>合計</span>
-                    <span className="text-2xl text-primary">
-                      ¥{cartTotal.toLocaleString()}
-                    </span>
+              {isDeleteMode ? (
+                <ProductDeletePanel
+                  selectedCount={selectedDeleteProductIds.length}
+                  onDelete={handleOpenProductDeleteConfirm}
+                />
+              ) : isProductEditMode ? (
+                <ProductEditPanel
+                  ref={productEditPanelRef}
+                  product={selectedEditingProduct}
+                  products={products}
+                  onSave={handleSaveProductFromEditPanel}
+                />
+              ) : (
+                <>
+                  <div className="flex items-center justify-between mb-4">
+                    <h2>カート</h2>
+                    {cart.length > 0 && (
+                      <button
+                        onClick={() => {
+                          if (confirm("カート内をクリアしますか？")) {
+                            setCart([]);
+                          }
+                        }}
+                        className="text-xs text-muted-foreground hover:text-destructive"
+                      >
+                        カート内をクリア
+                      </button>
+                    )}
                   </div>
 
-                  <div className="flex gap-2 mb-4">
-                    <button
-                      onClick={() => setPaymentMethod("cash")}
-                      className={`flex-1 py-3 rounded-lg flex items-center justify-center gap-2 ${paymentMethod === "cash"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary hover:bg-secondary/80"
-                        }`}
-                    >
-                      <Banknote className="w-4 h-4" />
-                      現金
-                    </button>
-                    <button
-                      onClick={() => setPaymentMethod("qr")}
-                      className={`flex-1 py-3 rounded-lg flex items-center justify-center gap-2 ${paymentMethod === "qr"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary hover:bg-secondary/80"
-                        }`}
-                    >
-                      <QrCode className="w-4 h-4" />
-                      QR
-                    </button>
+                  <div className="flex-1 overflow-y-auto space-y-2 mb-4">
+                    {cart.length === 0 ? (
+                      <p className="text-muted-foreground text-center py-8">
+                        カートが空です
+                      </p>
+                    ) : (
+                      cart.map((item) => (
+                        <CartItemComponent
+                          key={item.id}
+                          {...item}
+                          onIncrease={() => updateCartQuantity(item.id, 1)}
+                          onDecrease={() => updateCartQuantity(item.id, -1)}
+                          onRemove={() => removeFromCart(item.id)}
+                        />
+                      ))
+                    )}
                   </div>
 
-                  <button
-                    onClick={handleCheckout}
-                    disabled={cart.length === 0}
-                    className="w-full py-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    お会計へ進む
-                  </button>
-                </div>
-              </div>
+                  <div className="space-y-4">
+                    <div className="pt-4 border-t border-border">
+                      <div className="flex justify-between mb-4">
+                        <span>合計</span>
+                        <span className="text-2xl text-primary">
+                          ¥{cartTotal.toLocaleString()}
+                        </span>
+                      </div>
+
+                      <div className="flex gap-2 mb-4">
+                        <button
+                          onClick={() => setPaymentMethod("cash")}
+                          className={`flex-1 py-3 rounded-lg flex items-center justify-center gap-2 ${paymentMethod === "cash"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-secondary hover:bg-secondary/80"
+                            }`}
+                        >
+                          <Banknote className="w-4 h-4" />
+                          現金
+                        </button>
+                        <button
+                          onClick={() => setPaymentMethod("qr")}
+                          className={`flex-1 py-3 rounded-lg flex items-center justify-center gap-2 ${paymentMethod === "qr"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-secondary hover:bg-secondary/80"
+                            }`}
+                        >
+                          <QrCode className="w-4 h-4" />
+                          QR
+                        </button>
+                      </div>
+
+                      <button
+                        onClick={handleCheckout}
+                        disabled={cart.length === 0}
+                        className="w-full py-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        お会計へ進む
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </aside>
           </div>
         )}
@@ -1819,6 +2022,20 @@ export default function App() {
         message={toast?.message ?? null}
         toastId={toast?.id ?? 0}
         onClose={hideToast}
+      />
+
+      <UnsavedChangesConfirmModal
+        isOpen={pendingProductEditAction !== null}
+        onDiscard={handleDiscardProductEditAction}
+        onSave={handleSaveProductEditAction}
+        onCancel={handleCancelProductEditAction}
+      />
+
+      <ProductDeleteConfirmModal
+        isOpen={isProductDeleteConfirmOpen}
+        count={selectedDeleteProductIds.length}
+        onCancel={() => setIsProductDeleteConfirmOpen(false)}
+        onConfirm={handleConfirmDeleteProducts}
       />
     </div>
 
