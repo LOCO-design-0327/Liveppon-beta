@@ -72,6 +72,7 @@ type Size = { width: number; height: number };
 type PendingProductEditAction =
   | { type: "selectProduct"; productId: string }
   | { type: "exitEditMode" }
+  | { type: "enterDeleteMode" }
   | { type: "changeTab"; tab: AppTab };
 
 export default function App() {
@@ -274,11 +275,18 @@ export default function App() {
         return;
       }
 
+      if (action.type === "enterDeleteMode") {
+        clearProductDragState();
+        setIsDeleteMode(true);
+        setSelectedDeleteProductIds([]);
+        return;
+      }
+
       resetProductEditMode();
       setCurrentTab(action.tab);
       setSwipedSaleId(null);
     },
-    [resetProductEditMode]
+    [clearProductDragState, resetProductEditMode]
   );
 
   const requestProductEditAction = useCallback(
@@ -375,9 +383,7 @@ export default function App() {
 
   const handleProductDeleteFabClick = () => {
     if (!isDeleteMode) {
-      clearProductDragState();
-      setIsDeleteMode(true);
-      setSelectedDeleteProductIds([]);
+      requestProductEditAction({ type: "enterDeleteMode" });
       return;
     }
 
