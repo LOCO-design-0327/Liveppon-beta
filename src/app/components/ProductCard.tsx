@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, type CSSProperties } from "react";
 import { Check, Edit, Trash2 } from "lucide-react";
 
 interface ProductCardProps {
@@ -13,13 +13,22 @@ interface ProductCardProps {
   isSelectedForEdit?: boolean;
   isDeleteMode?: boolean;
   isSelectedForDelete?: boolean;
+  isReorderEnabled?: boolean;
+  isDragging?: boolean;
+  isDropSettling?: boolean;
+  dragPosition?: { x: number; y: number };
+  dragSize?: { width: number; height: number };
   onAdd: () => void;
   onUpdateQuantity: (change: number) => void;
   onSelectForEdit?: () => void;
   onToggleDeleteSelect?: () => void;
+  onReorderStart?: (productId: string, clientX: number, clientY: number) => void;
+  onReorderMove?: (clientX: number, clientY: number) => void;
+  onReorderEnd?: () => void;
 }
 
 export function ProductCard({
+  id,
   name,
   price,
   stock,
@@ -30,16 +39,26 @@ export function ProductCard({
   isSelectedForEdit = false,
   isDeleteMode = false,
   isSelectedForDelete = false,
+  isReorderEnabled = false,
+  isDragging = false,
+  isDropSettling = false,
+  dragPosition = { x: 0, y: 0 },
+  dragSize = { width: 0, height: 0 },
   onAdd,
   onUpdateQuantity,
   onSelectForEdit,
   onToggleDeleteSelect,
+  onReorderStart,
+  onReorderMove,
+  onReorderEnd,
 }: ProductCardProps) {
   const [showQuantityAdjust, setShowQuantityAdjust] = useState(false);
 
   const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTriggeredRef = useRef(false);
   const quantityRepeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
+  const pointerCurrentRef = useRef<{ x: number; y: number } | null>(null);
 
   const handleClick = () => {
     if (longPressTriggeredRef.current) {
@@ -64,7 +83,35 @@ export function ProductCard({
   };
 
   const handlePressStart = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (isEditMode) return;
+    if (isEditMode) {
+      longPressTriggeredRef.current = false;
+      pointerStartRef.current = { x: e.clientX, y: e.clientY };
+      pointerCurrentRef.current = { x: e.clientX, y: e.clientY };
+      const target = e.currentTarget;
+      const pointerId = e.pointerId;
+
+      pressTimerRef.current = setTimeout(() => {
+        longPressTriggeredRef.current = true;
+        setShowQuantityAdjust(false);
+        if (isReorderEnabled) {
+          try {
+            if (!target.hasPointerCapture(pointerId)) {
+              target.setPointerCapture(pointerId);
+            }
+          } catch {
+            return;
+          }
+
+          const pointer =
+            pointerCurrentRef.current ?? pointerStartRef.current;
+
+          if (pointer) {
+            onReorderStart?.(id, pointer.x, pointer.y);
+          }
+        }
+      }, 500);
+      return;
+    }
 
     e.preventDefault();
     if (stock <= 0 || cartQuantity <= 0) return;
@@ -78,7 +125,27 @@ export function ProductCard({
   };
 
   const handlePressEnd = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (isEditMode) return;
+    if (isEditMode) {
+      if (pressTimerRef.current) {
+        clearTimeout(pressTimerRef.current);
+        pressTimerRef.current = null;
+      }
+
+      pointerStartRef.current = null;
+      pointerCurrentRef.current = null;
+
+      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      }
+
+      if (longPressTriggeredRef.current) {
+        e.preventDefault();
+        if (isReorderEnabled) {
+          onReorderEnd?.();
+        }
+      }
+      return;
+    }
 
     e.preventDefault();
 
@@ -86,6 +153,33 @@ export function ProductCard({
       clearTimeout(pressTimerRef.current);
       pressTimerRef.current = null;
     }
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isEditMode) return;
+
+    pointerCurrentRef.current = { x: e.clientX, y: e.clientY };
+
+    if (!longPressTriggeredRef.current) {
+      const start = pointerStartRef.current;
+      if (!start) return;
+
+      const movedDistance = Math.hypot(
+        e.clientX - start.x,
+        e.clientY - start.y
+      );
+
+      if (movedDistance > 8 && pressTimerRef.current) {
+        clearTimeout(pressTimerRef.current);
+        pressTimerRef.current = null;
+      }
+      return;
+    }
+
+    if (!isReorderEnabled) return;
+
+    e.preventDefault();
+    onReorderMove?.(e.clientX, e.clientY);
   };
 
   const handleQuantityChange = (change: number) => {
@@ -128,18 +222,44 @@ export function ProductCard({
       : isSelectedForEdit && !isDeleteMode
         ? "ring-2 ring-primary"
         : "";
+  const cardMotionClass = isDragging
+    ? `z-[60] opacity-90 shadow-[0_16px_32px_rgba(0,0,0,0.35)] cursor-grabbing touch-none select-none ${
+        isDropSettling
+          ? "transition-[left,top,transform,opacity,box-shadow] duration-200 ease-out"
+          : "transition-[opacity,box-shadow] duration-150 ease-out"
+      }`
+    : "transition-all";
+  const cardInteractionClass =
+    isOutOfStock && !isEditMode
+      ? "bg-card/50 cursor-not-allowed opacity-60"
+      : isDragging
+        ? "bg-card"
+        : "bg-card cursor-pointer hover:scale-[1.02] active:scale-[0.98]";
+  const cardStyle: CSSProperties | undefined = isDragging
+    ? {
+        position: "fixed",
+        left: dragPosition.x,
+        top: dragPosition.y,
+        width: dragSize.width,
+        height: dragSize.height,
+        transform: `translate3d(-50%, -50%, 0) scale(${isDropSettling ? 1 : 1.04})`,
+      }
+    : undefined;
 
   return (
     <div
-      className={`relative aspect-square rounded-lg overflow-hidden transition-all ${isOutOfStock && !isEditMode
-        ? "bg-card/50 cursor-not-allowed opacity-60"
-        : "bg-card cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
-        } ${cardHighlightClass}`}
+      data-product-id={id}
+      style={cardStyle}
+      className={`relative w-full h-full rounded-lg overflow-hidden ${cardMotionClass} ${cardInteractionClass} ${cardHighlightClass}`}
       onClick={handleClick}
       onPointerDown={handlePressStart}
+      onPointerMove={handlePointerMove}
       onPointerUp={handlePressEnd}
       onPointerCancel={handlePressEnd}
-      onPointerLeave={handlePressEnd}
+      onPointerLeave={(e) => {
+        if (isEditMode && isReorderEnabled) return;
+        handlePressEnd(e);
+      }}
     >
       {isOutOfStock && (
         <div className="absolute top-0 left-0 w-0 h-0 border-l-[40px] border-l-destructive border-t-[40px] border-t-destructive border-r-[40px] border-r-transparent border-b-[40px] border-b-transparent z-10">
@@ -181,6 +301,7 @@ export function ProductCard({
             src={imageUrl}
             alt={name}
             decoding="async"
+            draggable={false}
             className="w-full h-full object-cover"
           />
         ) : (

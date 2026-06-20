@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useCallback, useRef } from "react";
 import {
   ShoppingBag,
   History,
@@ -64,7 +64,11 @@ import { AppInfoModal } from "./components/AppInfoModal";
 
 type PinModalPurpose = "owner" | "productEditModeShortcut";
 const ADMIN_MODE_DURATION_MS = 10 * 60 * 1000;
+const PRODUCT_REORDER_AUTO_SCROLL_EDGE_PX = 100;
+const PRODUCT_REORDER_AUTO_SCROLL_STEP_PX = 12;
 type AppTab = "sales" | "history" | "summary";
+type Point = { x: number; y: number };
+type Size = { width: number; height: number };
 type PendingProductEditAction =
   | { type: "selectProduct"; productId: string }
   | { type: "exitEditMode" }
@@ -142,12 +146,36 @@ export default function App() {
   const [selectedDeleteProductIds, setSelectedDeleteProductIds] = useState<
     string[]
   >([]);
+  const [draggingProductId, setDraggingProductId] = useState<string | null>(
+    null
+  );
+  const [draggingProductPosition, setDraggingProductPosition] =
+    useState<Point>({
+      x: 0,
+      y: 0,
+    });
+  const [draggingProductSize, setDraggingProductSize] = useState<Size>({
+    width: 0,
+    height: 0,
+  });
+  const [isProductDropSettling, setIsProductDropSettling] = useState(false);
+  const [productReorderPreviewProducts, setProductReorderPreviewProducts] =
+    useState<Product[] | null>(null);
   const [isProductDeleteConfirmOpen, setIsProductDeleteConfirmOpen] =
     useState(false);
   const [pendingProductEditAction, setPendingProductEditAction] =
     useState<PendingProductEditAction | null>(null);
   const productEditPanelRef = useRef<ProductEditPanelHandle>(null);
   const productListScrollRef = useRef<HTMLDivElement>(null);
+  const productsRef = useRef<Product[]>(products);
+  const draggingProductIdRef = useRef<string | null>(null);
+  const draggingProductPointerRef = useRef<Point | null>(null);
+  const productReorderPositionsRef = useRef<Map<string, DOMRect>>(new Map());
+  const productReorderAnimationIdRef = useRef(0);
+  const productReorderAutoScrollFrameRef = useRef<number | null>(null);
+  const productDropSettleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
 
   const [isPortrait, setIsPortrait] = useState(false);
 
@@ -186,21 +214,48 @@ export default function App() {
     setToast(null);
   }, []);
 
+  const clearProductDragState = useCallback(() => {
+    if (productDropSettleTimerRef.current) {
+      clearTimeout(productDropSettleTimerRef.current);
+      productDropSettleTimerRef.current = null;
+    }
+
+    if (productReorderAutoScrollFrameRef.current !== null) {
+      window.cancelAnimationFrame(productReorderAutoScrollFrameRef.current);
+      productReorderAutoScrollFrameRef.current = null;
+    }
+
+    setDraggingProductId(null);
+    setDraggingProductPosition({ x: 0, y: 0 });
+    setDraggingProductSize({ width: 0, height: 0 });
+    setIsProductDropSettling(false);
+    setProductReorderPreviewProducts(null);
+    draggingProductIdRef.current = null;
+    draggingProductPointerRef.current = null;
+  }, []);
+
   const resetProductEditMode = useCallback(() => {
     setIsProductEditMode(false);
     setSelectedEditingProductId(null);
     setIsDeleteMode(false);
     setSelectedDeleteProductIds([]);
+    clearProductDragState();
     setIsProductDeleteConfirmOpen(false);
     setPendingProductEditAction(null);
-  }, []);
+  }, [clearProductDragState]);
 
   const startProductEditMode = useCallback(() => {
     setIsProductEditMode(true);
     setSelectedEditingProductId(null);
     setIsDeleteMode(false);
     setSelectedDeleteProductIds([]);
-  }, []);
+    clearProductDragState();
+  }, [clearProductDragState]);
+
+  const canReorderProducts =
+    isProductEditMode && !isDeleteMode && selectedCategory === "すべて";
+  const isProductReorderDragging =
+    draggingProductId !== null && !isProductDropSettling;
 
   const hasUnsavedProductEditChanges = useCallback(
     () => isProductEditMode && productEditPanelRef.current?.isDirty() === true,
@@ -267,8 +322,60 @@ export default function App() {
     );
   };
 
+  const captureProductCardPositions = useCallback(() => {
+    const container = productListScrollRef.current;
+    const positions = new Map<string, DOMRect>();
+
+    if (!container) return positions;
+
+    container
+      .querySelectorAll<HTMLElement>("[data-product-slot-id]")
+      .forEach((slot) => {
+        const productId = slot.dataset.productSlotId;
+        if (!productId) return;
+
+        positions.set(productId, slot.getBoundingClientRect());
+      });
+
+    return positions;
+  }, []);
+
+  const getProductSlotRect = useCallback((productId: string) => {
+    const container = productListScrollRef.current;
+    if (!container) return null;
+
+    const slots = container.querySelectorAll<HTMLElement>(
+      "[data-product-slot-id]"
+    );
+    const slot = Array.from(slots).find(
+      (element) => element.dataset.productSlotId === productId
+    );
+
+    return slot?.getBoundingClientRect() ?? null;
+  }, []);
+
+  const getProductCardElement = useCallback((productId: string) => {
+    const container = productListScrollRef.current;
+    if (!container) return null;
+
+    const cards = container.querySelectorAll<HTMLElement>("[data-product-id]");
+    return (
+      Array.from(cards).find(
+        (element) => element.dataset.productId === productId
+      ) ?? null
+    );
+  }, []);
+
+  const updateDraggingProductPosition = useCallback(
+    (clientX: number, clientY: number) => {
+      setDraggingProductPosition({ x: clientX, y: clientY });
+    },
+    []
+  );
+
   const handleProductDeleteFabClick = () => {
     if (!isDeleteMode) {
+      clearProductDragState();
       setIsDeleteMode(true);
       setSelectedDeleteProductIds([]);
       return;
@@ -277,6 +384,122 @@ export default function App() {
     setIsDeleteMode(false);
     setSelectedDeleteProductIds([]);
     setIsProductDeleteConfirmOpen(false);
+  };
+
+  const handleProductReorderStart = (
+    productId: string,
+    clientX: number,
+    clientY: number
+  ) => {
+    if (!canReorderProducts) return;
+
+    const slotRect = getProductSlotRect(productId);
+    if (!slotRect) return;
+
+    if (productDropSettleTimerRef.current) {
+      clearTimeout(productDropSettleTimerRef.current);
+      productDropSettleTimerRef.current = null;
+    }
+
+    draggingProductIdRef.current = productId;
+    draggingProductPointerRef.current = { x: clientX, y: clientY };
+    productsRef.current = products;
+    setProductReorderPreviewProducts(products);
+    setDraggingProductSize({
+      width: slotRect.width,
+      height: slotRect.height,
+    });
+    setIsProductDropSettling(false);
+    updateDraggingProductPosition(clientX, clientY);
+    setDraggingProductId(productId);
+  };
+
+  const handleProductReorderMove = useCallback(
+    (clientX: number, clientY: number) => {
+      if (!canReorderProducts) return;
+
+      const draggingId = draggingProductIdRef.current;
+      if (!draggingId) return;
+
+      draggingProductPointerRef.current = { x: clientX, y: clientY };
+      updateDraggingProductPosition(clientX, clientY);
+
+      const draggingCard = getProductCardElement(draggingId);
+      const previousPointerEvents = draggingCard?.style.pointerEvents;
+
+      if (draggingCard) {
+        draggingCard.style.pointerEvents = "none";
+      }
+
+      const targetElement = document.elementFromPoint(clientX, clientY);
+      const targetSlot = targetElement?.closest("[data-product-slot-id]") as
+        | HTMLElement
+        | null;
+      const targetId = targetSlot?.dataset.productSlotId;
+
+      if (draggingCard) {
+        draggingCard.style.pointerEvents = previousPointerEvents ?? "";
+      }
+
+      if (!targetId || targetId === draggingId) return;
+
+      const currentProducts = productsRef.current;
+      const fromIndex = currentProducts.findIndex(
+        (product) => product.id === draggingId
+      );
+      const toIndex = currentProducts.findIndex(
+        (product) => product.id === targetId
+      );
+
+      if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) return;
+
+      productReorderPositionsRef.current = captureProductCardPositions();
+
+      const nextProducts = [...currentProducts];
+      const [movingProduct] = nextProducts.splice(fromIndex, 1);
+      nextProducts.splice(toIndex, 0, movingProduct);
+
+      productsRef.current = nextProducts;
+      setProductReorderPreviewProducts(nextProducts);
+    },
+    [
+      canReorderProducts,
+      captureProductCardPositions,
+      getProductCardElement,
+      updateDraggingProductPosition,
+    ]
+  );
+
+  const handleProductReorderEnd = () => {
+    const draggingId = draggingProductIdRef.current;
+    if (!draggingId) return;
+
+    const dropSlotRect = getProductSlotRect(draggingId);
+
+    setProducts(productsRef.current);
+    draggingProductIdRef.current = null;
+    draggingProductPointerRef.current = null;
+    setIsProductDropSettling(true);
+
+    if (dropSlotRect) {
+      setDraggingProductPosition({
+        x: dropSlotRect.left + dropSlotRect.width / 2,
+        y: dropSlotRect.top + dropSlotRect.height / 2,
+      });
+    }
+
+    if (productDropSettleTimerRef.current) {
+      clearTimeout(productDropSettleTimerRef.current);
+    }
+
+    productDropSettleTimerRef.current = setTimeout(() => {
+      setDraggingProductId(null);
+      setDraggingProductPosition({ x: 0, y: 0 });
+      setDraggingProductSize({ width: 0, height: 0 });
+      setIsProductDropSettling(false);
+      setProductReorderPreviewProducts(null);
+      productDropSettleTimerRef.current = null;
+    }, 200);
   };
 
   const handleOpenProductDeleteConfirm = () => {
@@ -385,6 +608,129 @@ export default function App() {
     setIsSalesStyleOpen(false);
     setIsSettingsOpen(true);
   };
+
+  useLayoutEffect(() => {
+    const draggingId = draggingProductIdRef.current;
+    const previousPositions = productReorderPositionsRef.current;
+
+    if (!draggingId || previousPositions.size === 0) return;
+
+    const container = productListScrollRef.current;
+    if (!container) return;
+
+    productReorderAnimationIdRef.current += 1;
+    const animationId = productReorderAnimationIdRef.current.toString();
+
+    container
+      .querySelectorAll<HTMLElement>("[data-product-slot-id]")
+      .forEach((slot) => {
+        const productId = slot.dataset.productSlotId;
+        if (!productId || productId === draggingId) return;
+
+        const previousPosition = previousPositions.get(productId);
+        if (!previousPosition) return;
+
+        const currentPosition = slot.getBoundingClientRect();
+        const deltaX = previousPosition.left - currentPosition.left;
+        const deltaY = previousPosition.top - currentPosition.top;
+
+        if (deltaX === 0 && deltaY === 0) return;
+
+        slot.style.transition = "none";
+        slot.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+        slot.dataset.reorderAnimationId = animationId;
+        slot.getBoundingClientRect();
+
+        requestAnimationFrame(() => {
+          slot.style.transition = "transform 180ms ease-out";
+          slot.style.transform = "";
+
+          window.setTimeout(() => {
+            if (slot.dataset.reorderAnimationId !== animationId) return;
+
+            slot.style.transition = "";
+            delete slot.dataset.reorderAnimationId;
+          }, 200);
+        });
+      });
+
+    productReorderPositionsRef.current = new Map();
+  }, [productReorderPreviewProducts, products]);
+
+  useEffect(() => {
+    if (!isProductReorderDragging) return;
+
+    const preventTouchScroll = (event: TouchEvent) => {
+      event.preventDefault();
+    };
+
+    document.addEventListener("touchmove", preventTouchScroll, {
+      passive: false,
+    });
+
+    return () => {
+      document.removeEventListener("touchmove", preventTouchScroll);
+    };
+  }, [isProductReorderDragging]);
+
+  useEffect(() => {
+    if (!isProductReorderDragging) return;
+
+    const runAutoScroll = () => {
+      const container = productListScrollRef.current;
+      const pointer = draggingProductPointerRef.current;
+
+      if (container && pointer) {
+        const containerRect = container.getBoundingClientRect();
+        const isPointerInsideHorizontally =
+          pointer.x >= containerRect.left && pointer.x <= containerRect.right;
+
+        let scrollDelta = 0;
+
+        if (isPointerInsideHorizontally) {
+          if (
+            pointer.y <=
+            containerRect.top + PRODUCT_REORDER_AUTO_SCROLL_EDGE_PX
+          ) {
+            scrollDelta = -PRODUCT_REORDER_AUTO_SCROLL_STEP_PX;
+          } else if (
+            pointer.y >=
+            containerRect.bottom - PRODUCT_REORDER_AUTO_SCROLL_EDGE_PX
+          ) {
+            scrollDelta = PRODUCT_REORDER_AUTO_SCROLL_STEP_PX;
+          }
+        }
+
+        if (scrollDelta !== 0) {
+          const previousScrollTop = container.scrollTop;
+          container.scrollTop += scrollDelta;
+
+          if (container.scrollTop !== previousScrollTop) {
+            handleProductReorderMove(pointer.x, pointer.y);
+          }
+        }
+      }
+
+      productReorderAutoScrollFrameRef.current =
+        window.requestAnimationFrame(runAutoScroll);
+    };
+
+    productReorderAutoScrollFrameRef.current =
+      window.requestAnimationFrame(runAutoScroll);
+
+    return () => {
+      if (productReorderAutoScrollFrameRef.current !== null) {
+        window.cancelAnimationFrame(productReorderAutoScrollFrameRef.current);
+        productReorderAutoScrollFrameRef.current = null;
+      }
+    };
+  }, [handleProductReorderMove, isProductReorderDragging]);
+
+  useEffect(() => {
+    if (productReorderPreviewProducts) return;
+
+    productsRef.current = products;
+  }, [productReorderPreviewProducts, products]);
 
   useEffect(() => {
     let hasReplacement = false;
@@ -999,7 +1345,9 @@ export default function App() {
     ),
   ];
 
-  const filteredProducts = products.filter((product) => {
+  const visibleProducts = productReorderPreviewProducts ?? products;
+
+  const filteredProducts = visibleProducts.filter((product) => {
     const categoryMatch =
       selectedCategory === "すべて" || product.category === selectedCategory;
     const stockMatch = !hideOutOfStock || product.stock > 0;
@@ -1233,7 +1581,9 @@ export default function App() {
             <div className="relative flex-1 overflow-hidden">
               <div
                 ref={productListScrollRef}
-                className="h-full p-6 pb-20 overflow-y-auto flex flex-col"
+                className={`h-full p-6 pb-20 overflow-y-auto flex flex-col ${
+                  isProductReorderDragging ? "touch-none" : ""
+                }`}
               >
                 <div className="mb-4 flex items-center gap-4">
                   <div className="flex gap-2 flex-wrap">
@@ -1267,7 +1617,7 @@ export default function App() {
                 </div>
 
                 <div className="flex-1">
-                  {products.length === 0 ? (
+                  {visibleProducts.length === 0 ? (
                     <div className="flex items-center justify-center h-full">
                       <button
                         onClick={handleAddFirstProduct}
@@ -1293,33 +1643,57 @@ export default function App() {
                   ) : (
                     <div className="grid grid-cols-4 gap-4">
                       {filteredProducts.map((product) => (
-                        <ProductCard
+                        <div
                           key={product.id}
-                          {...product}
-                          cartQuantity={
-                            cart.find((item) => item.id === product.id)
-                              ?.quantity || 0
-                          }
-                          lowStockThreshold={lowStockThreshold}
-                          isEditMode={isProductEditMode}
-                          isSelectedForEdit={
-                            selectedEditingProductId === product.id
-                          }
-                          isDeleteMode={isDeleteMode}
-                          isSelectedForDelete={selectedDeleteProductIds.includes(
-                            product.id
-                          )}
-                          onAdd={() => addToCart(product.id)}
-                          onUpdateQuantity={(change) =>
-                            updateCartQuantity(product.id, change)
-                          }
-                          onSelectForEdit={() =>
-                            handleSelectProductForEdit(product.id)
-                          }
-                          onToggleDeleteSelect={() =>
-                            handleToggleDeleteProductSelection(product.id)
-                          }
-                        />
+                          data-product-slot-id={product.id}
+                          className="relative aspect-square"
+                        >
+                          <ProductCard
+                            {...product}
+                            cartQuantity={
+                              cart.find((item) => item.id === product.id)
+                                ?.quantity || 0
+                            }
+                            lowStockThreshold={lowStockThreshold}
+                            isEditMode={isProductEditMode}
+                            isSelectedForEdit={
+                              selectedEditingProductId === product.id
+                            }
+                            isDeleteMode={isDeleteMode}
+                            isSelectedForDelete={selectedDeleteProductIds.includes(
+                              product.id
+                            )}
+                            isReorderEnabled={canReorderProducts}
+                            isDragging={draggingProductId === product.id}
+                            isDropSettling={
+                              isProductDropSettling &&
+                              draggingProductId === product.id
+                            }
+                            dragPosition={
+                              draggingProductId === product.id
+                                ? draggingProductPosition
+                                : undefined
+                            }
+                            dragSize={
+                              draggingProductId === product.id
+                                ? draggingProductSize
+                                : undefined
+                            }
+                            onAdd={() => addToCart(product.id)}
+                            onUpdateQuantity={(change) =>
+                              updateCartQuantity(product.id, change)
+                            }
+                            onSelectForEdit={() =>
+                              handleSelectProductForEdit(product.id)
+                            }
+                            onToggleDeleteSelect={() =>
+                              handleToggleDeleteProductSelection(product.id)
+                            }
+                            onReorderStart={handleProductReorderStart}
+                            onReorderMove={handleProductReorderMove}
+                            onReorderEnd={handleProductReorderEnd}
+                          />
+                        </div>
                       ))}
                     </div>
                   )}
