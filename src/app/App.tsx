@@ -11,6 +11,7 @@ import {
   Bell,
   Shield,
   Edit,
+  Check,
 } from "lucide-react";
 import { ProductCard } from "./components/ProductCard";
 import { CartItem as CartItemComponent } from "./components/CartItem";
@@ -52,13 +53,12 @@ import { BeginnerIcon } from "../assets/icons/BeginnerIcon";
 
 import { AppInfoModal } from "./components/AppInfoModal";
 
-type PinModalPurpose = "owner" | "productSettingsShortcut";
+type PinModalPurpose = "owner" | "productEditModeShortcut";
 const ADMIN_MODE_DURATION_MS = 10 * 60 * 1000;
+type AppTab = "sales" | "history" | "summary";
 
 export default function App() {
-  const [currentTab, setCurrentTab] = useState<
-    "sales" | "history" | "summary"
-  >("sales");
+  const [currentTab, setCurrentTab] = useState<AppTab>("sales");
   const [isSummaryHelpOpen, setIsSummaryHelpOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("すべて");
   const [hideOutOfStock, setHideOutOfStock] = useLocalStorage<boolean>(
@@ -121,6 +121,10 @@ export default function App() {
   const [isSalesHistoryHelpOpen, setIsSalesHistoryHelpOpen] = useState(false);
   const [isOwnerMode, setIsOwnerMode] = useState(false);
   const [isOwnerModeMenuOpen, setIsOwnerModeMenuOpen] = useState(false);
+  const [isProductEditMode, setIsProductEditMode] = useState(false);
+  const [selectedEditingProductId, setSelectedEditingProductId] = useState<
+    string | null
+  >(null);
 
   const [isPortrait, setIsPortrait] = useState(false);
 
@@ -159,9 +163,29 @@ export default function App() {
     setToast(null);
   }, []);
 
+  const resetProductEditMode = useCallback(() => {
+    setIsProductEditMode(false);
+    setSelectedEditingProductId(null);
+  }, []);
+
+  const startProductEditMode = useCallback(() => {
+    setIsProductEditMode(true);
+    setSelectedEditingProductId(null);
+  }, []);
+
+  const handleChangeTab = (tab: AppTab) => {
+    if (tab !== currentTab) {
+      resetProductEditMode();
+    }
+
+    setCurrentTab(tab);
+    setSwipedSaleId(null);
+  };
+
   const handleSelectSalesStyle = (style: SalesStyle) => {
     const didChange = salesStyle !== style;
 
+    resetProductEditMode();
     setSalesStyle(style);
 
     if (isSalesStyleOpen) {
@@ -219,6 +243,12 @@ export default function App() {
       window.removeEventListener("resize", checkOrientation);
     };
   }, []);
+
+  useEffect(() => {
+    if (salesStyle === "team" && isProductEditMode && !isOwnerMode) {
+      resetProductEditMode();
+    }
+  }, [isOwnerMode, isProductEditMode, resetProductEditMode, salesStyle]);
 
   const addOperationLog = (
     operation: string,
@@ -369,11 +399,11 @@ export default function App() {
 
   const handleVerifyPin = (pin: string): boolean => {
     if (pin === ownerPin) {
-      if (pinModalPurpose === "productSettingsShortcut") {
+      if (pinModalPurpose === "productEditModeShortcut") {
         setIsOwnerMode(true);
         setAdminModeExpiresAt(Date.now() + ADMIN_MODE_DURATION_MS);
         setIsOwnerPinOpen(false);
-        handleOpenProductSettingsFromShortcut();
+        startProductEditMode();
         return true;
       }
 
@@ -394,46 +424,50 @@ export default function App() {
   const handleOwnerLogout = () => {
     setIsOwnerMode(false);
     setIsSettingsOpen(false);
+    resetProductEditMode();
     addOperationLog("オーナーログアウト", "オーナーモードを終了しました");
   };
 
   const handleOpenProductSettings = () => {
+    resetProductEditMode();
     setReturnToSettingsAfterProductSettings(true);
     setIsSettingsOpen(false);
     setIsProductSettingsOpen(true);
   };
 
-  const handleOpenProductSettingsFromShortcut = () => {
-    setReturnToSettingsAfterProductSettings(false);
-    setIsSettingsOpen(false);
-    setIsProductSettingsOpen(true);
-  };
+  const handleToggleProductEditMode = () => {
+    if (isProductEditMode) {
+      resetProductEditMode();
+      return;
+    }
 
-  const handleOpenProductSettingsShortcut = () => {
     if (salesStyle === "team") {
       if (
         isOwnerMode &&
         adminModeExpiresAt &&
         Date.now() < adminModeExpiresAt
       ) {
-        handleOpenProductSettingsFromShortcut();
+        startProductEditMode();
         return;
       }
 
       if (adminModeExpiresAt && Date.now() >= adminModeExpiresAt) {
         setIsOwnerMode(false);
         setAdminModeExpiresAt(null);
+        resetProductEditMode();
       }
 
-      setPinModalPurpose("productSettingsShortcut");
+      setPinModalPurpose("productEditModeShortcut");
       setIsOwnerPinOpen(true);
       return;
     }
 
-    handleOpenProductSettingsFromShortcut();
+    startProductEditMode();
   };
 
   const handleAddFirstProduct = () => {
+    resetProductEditMode();
+
     if (!isOwnerMode) {
       setPinModalAction(() => () => {
         setIsProductSettingsOpen(true);
@@ -465,6 +499,7 @@ export default function App() {
   };
 
   const handleOpenSalesStyle = () => {
+    resetProductEditMode();
     setIsSettingsOpen(false);
     setIsSalesStyleOpen(true);
   };
@@ -908,10 +943,7 @@ export default function App() {
 
           <nav className="flex gap-2">
             <button
-              onClick={() => {
-                setCurrentTab("sales");
-                setSwipedSaleId(null);
-              }}
+              onClick={() => handleChangeTab("sales")}
               className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${currentTab === "sales"
                 ? "bg-primary text-primary-foreground"
                 : "hover:bg-secondary"
@@ -921,10 +953,7 @@ export default function App() {
               販売
             </button>
             <button
-              onClick={() => {
-                setCurrentTab("history");
-                setSwipedSaleId(null);
-              }}
+              onClick={() => handleChangeTab("history")}
               className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${currentTab === "history"
                 ? "bg-primary text-primary-foreground"
                 : "hover:bg-secondary"
@@ -934,10 +963,7 @@ export default function App() {
               履歴
             </button>
             <button
-              onClick={() => {
-                setCurrentTab("summary");
-                setSwipedSaleId(null);
-              }}
+              onClick={() => handleChangeTab("summary")}
               className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${currentTab === "summary"
                 ? "bg-primary text-primary-foreground"
                 : "hover:bg-secondary"
@@ -1013,92 +1039,129 @@ export default function App() {
       <main className="flex-1 overflow-hidden">
         {currentTab === "sales" && (
           <div className="h-full flex">
-            <div className="flex-1 p-6 overflow-y-auto flex flex-col">
-              <div className="mb-4 flex items-center gap-4">
-                <div className="flex gap-2 flex-wrap">
-                  {categories.map((category) => (
-                    <button
-                      key={category}
-                      onClick={() => setSelectedCategory(category)}
-                      className={`px-4 py-2 rounded-full transition-colors ${selectedCategory === category ? "bg-primary text-primary-foreground" : "bg-card hover:bg-card/80 border border-border"} text-[14px]`}
-                    >
-                      {category}
-                    </button>
-                  ))}
-                </div>
-                <div className="flex items-center gap-3 ml-auto mr-1 whitespace-nowrap">
-                  <span className="text-sm text-foreground">
-                    在庫0を隠す
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setHideOutOfStock(!hideOutOfStock)}
-                    className={`relative inline-flex h-7 w-14 flex-shrink-0 items-center rounded-full transition-colors ${hideOutOfStock ? "bg-primary" : "bg-secondary"
-                      }`}
-                    aria-pressed={hideOutOfStock}
-                  >
-                    <span
-                      className={`inline-block h-5 w-5 rounded-full bg-white transition-transform ${hideOutOfStock ? "translate-x-8" : "translate-x-1"
-                        }`}
-                    />
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex-1">
-                {products.length === 0 ? (
-                  <div className="flex items-center justify-center h-full">
-                    <button
-                      onClick={handleAddFirstProduct}
-                      className="aspect-square w-64 bg-card hover:bg-card/80 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center gap-4 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                    >
-                      <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center">
-                        <Plus className="w-10 h-10 text-primary" />
-                      </div>
-                      <div className="text-center">
-                        <h3 className="mb-2">商品を追加</h3>
-                        <p className="text-sm text-muted-foreground px-4">
-                          商品がまだ登録されていません
-                          <br />
-                          タップして商品登録を始めます
-                        </p>
-                      </div>
-                    </button>
-                  </div>
-                ) : filteredProducts.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    このカテゴリの商品はありません
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-4 gap-4">
-                    {filteredProducts.map((product) => (
-                      <ProductCard
-                        key={product.id}
-                        {...product}
-                        cartQuantity={
-                          cart.find((item) => item.id === product.id)
-                            ?.quantity || 0
-                        }
-                        lowStockThreshold={lowStockThreshold}
-                        onAdd={() => addToCart(product.id)}
-                        onUpdateQuantity={(change) =>
-                          updateCartQuantity(product.id, change)
-                        }
-                      />
+            <div className="relative flex-1 overflow-hidden">
+              <div className="h-full p-6 pb-20 overflow-y-auto flex flex-col">
+                <div className="mb-4 flex items-center gap-4">
+                  <div className="flex gap-2 flex-wrap">
+                    {categories.map((category) => (
+                      <button
+                        key={category}
+                        onClick={() => setSelectedCategory(category)}
+                        className={`px-4 py-2 rounded-full transition-colors ${selectedCategory === category ? "bg-primary text-primary-foreground" : "bg-card hover:bg-card/80 border border-border"} text-[14px]`}
+                      >
+                        {category}
+                      </button>
                     ))}
                   </div>
+                  <div className="flex items-center gap-3 ml-auto mr-1 whitespace-nowrap">
+                    <span className="text-sm text-foreground">
+                      在庫0を隠す
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setHideOutOfStock(!hideOutOfStock)}
+                      className={`relative inline-flex h-7 w-14 flex-shrink-0 items-center rounded-full transition-colors ${hideOutOfStock ? "bg-primary" : "bg-secondary"
+                        }`}
+                      aria-pressed={hideOutOfStock}
+                    >
+                      <span
+                        className={`inline-block h-5 w-5 rounded-full bg-white transition-transform ${hideOutOfStock ? "translate-x-8" : "translate-x-1"
+                          }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                {isProductEditMode && (
+                  <div className="mb-4 rounded-lg border border-primary/30 bg-primary/10 px-4 py-3 text-primary">
+                    <div className="flex items-center gap-2">
+                      <Edit className="w-4 h-4" />
+                      <div>
+                        <div className="text-sm font-medium">
+                          商品編集モード
+                        </div>
+                        <div className="text-xs text-primary/80">
+                          編集したい商品を選択してください
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 )}
+
+                <div className="flex-1">
+                  {products.length === 0 ? (
+                    <div className="flex items-center justify-center h-full">
+                      <button
+                        onClick={handleAddFirstProduct}
+                        className="aspect-square w-64 bg-card hover:bg-card/80 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center gap-4 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                      >
+                        <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center">
+                          <Plus className="w-10 h-10 text-primary" />
+                        </div>
+                        <div className="text-center">
+                          <h3 className="mb-2">商品を追加</h3>
+                          <p className="text-sm text-muted-foreground px-4">
+                            商品がまだ登録されていません
+                            <br />
+                            タップして商品登録を始めます
+                          </p>
+                        </div>
+                      </button>
+                    </div>
+                  ) : filteredProducts.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      このカテゴリの商品はありません
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-4 gap-4">
+                      {filteredProducts.map((product) => (
+                        <ProductCard
+                          key={product.id}
+                          {...product}
+                          cartQuantity={
+                            cart.find((item) => item.id === product.id)
+                              ?.quantity || 0
+                          }
+                          lowStockThreshold={lowStockThreshold}
+                          isEditMode={isProductEditMode}
+                          isSelectedForEdit={
+                            selectedEditingProductId === product.id
+                          }
+                          onAdd={() => addToCart(product.id)}
+                          onUpdateQuantity={(change) =>
+                            updateCartQuantity(product.id, change)
+                          }
+                          onSelectForEdit={() =>
+                            setSelectedEditingProductId(product.id)
+                          }
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="mt-4 flex justify-end">
+              <div className="absolute bottom-6 right-6 z-50">
                 <button
                   type="button"
-                  onClick={handleOpenProductSettingsShortcut}
+                  onClick={handleToggleProductEditMode}
                   className="w-10 h-10 rounded-full bg-primary text-primary-foreground hover:opacity-90 flex items-center justify-center transition-all active:scale-[0.96]"
-                  aria-label="商品管理を開く"
-                  title="商品管理"
+                  aria-label={
+                    isProductEditMode
+                      ? "商品編集を終了"
+                      : "商品編集モードを開始"
+                  }
+                  title={
+                    isProductEditMode
+                      ? "商品編集を終了"
+                      : "商品編集モードを開始"
+                  }
                 >
-                  <Edit className="w-5 h-5" />
+                  {isProductEditMode ? (
+                    <Check className="w-5 h-5" />
+                  ) : (
+                    <Edit className="w-5 h-5" />
+                  )}
                 </button>
               </div>
             </div>
@@ -1554,8 +1617,8 @@ export default function App() {
         onClose={() => setIsOwnerPinOpen(false)}
         onVerify={handleVerifyPin}
         title={
-          pinModalPurpose === "productSettingsShortcut"
-            ? "商品管理"
+          pinModalPurpose === "productEditModeShortcut"
+            ? "商品編集"
             : undefined
         }
       />
@@ -1635,6 +1698,7 @@ export default function App() {
         onLogout={() => {
           setIsOwnerModeMenuOpen(false);
           setIsOwnerMode(false);
+          resetProductEditMode();
         }}
       />
 

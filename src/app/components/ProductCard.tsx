@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { Edit } from "lucide-react";
 
 interface ProductCardProps {
   id: string;
@@ -8,8 +9,11 @@ interface ProductCardProps {
   imageUrl?: string;
   cartQuantity?: number;
   lowStockThreshold?: number;
+  isEditMode?: boolean;
+  isSelectedForEdit?: boolean;
   onAdd: () => void;
   onUpdateQuantity: (change: number) => void;
+  onSelectForEdit?: () => void;
 }
 
 export function ProductCard({
@@ -19,8 +23,11 @@ export function ProductCard({
   imageUrl,
   cartQuantity = 0,
   lowStockThreshold = 5,
+  isEditMode = false,
+  isSelectedForEdit = false,
   onAdd,
   onUpdateQuantity,
+  onSelectForEdit,
 }: ProductCardProps) {
   const [showQuantityAdjust, setShowQuantityAdjust] = useState(false);
 
@@ -34,12 +41,20 @@ export function ProductCard({
       return;
     }
 
+    if (isEditMode) {
+      setShowQuantityAdjust(false);
+      onSelectForEdit?.();
+      return;
+    }
+
     if (!showQuantityAdjust && stock > 0) {
       onAdd();
     }
   };
 
   const handlePressStart = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (isEditMode) return;
+
     e.preventDefault();
     if (stock <= 0 || cartQuantity <= 0) return;
 
@@ -52,6 +67,8 @@ export function ProductCard({
   };
 
   const handlePressEnd = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (isEditMode) return;
+
     e.preventDefault();
 
     if (pressTimerRef.current) {
@@ -97,10 +114,10 @@ export function ProductCard({
 
   return (
     <div
-      className={`relative aspect-square rounded-lg overflow-hidden transition-all ${isOutOfStock
+      className={`relative aspect-square rounded-lg overflow-hidden transition-all ${isOutOfStock && !isEditMode
         ? "bg-card/50 cursor-not-allowed opacity-60"
         : "bg-card cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
-        }`}
+        } ${isSelectedForEdit ? "ring-2 ring-primary" : ""}`}
       onClick={handleClick}
       onPointerDown={handlePressStart}
       onPointerUp={handlePressEnd}
@@ -112,6 +129,18 @@ export function ProductCard({
           <span className="absolute -top-[30px] -left-[30px] w-[40px] text-center text-destructive-foreground rotate-[-45deg] origin-center font-bold leading-tight text-[11px]">
             SOLD OUT
           </span>
+        </div>
+      )}
+
+      {isEditMode && (
+        <div
+          className={`absolute top-2 right-2 z-40 rounded-full px-2 py-1 text-[11px] flex items-center gap-1 border ${isSelectedForEdit
+            ? "bg-primary text-primary-foreground border-primary"
+            : "bg-card/95 text-foreground border-primary/40"
+            }`}
+        >
+          <Edit className="w-3 h-3" />
+          編集
         </div>
       )}
 
@@ -159,7 +188,7 @@ export function ProductCard({
         </div>
       </div>
 
-      {cartQuantity > 0 && (
+      {cartQuantity > 0 && !isEditMode && (
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -183,7 +212,7 @@ export function ProductCard({
         </button>
       )}
 
-      {showQuantityAdjust && (
+      {showQuantityAdjust && !isEditMode && (
         <div
           className="absolute inset-0 bg-black/50 flex items-center justify-center z-30"
           onClick={(e) => e.stopPropagation()}
