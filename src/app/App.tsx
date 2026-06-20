@@ -147,6 +147,7 @@ export default function App() {
   const [pendingProductEditAction, setPendingProductEditAction] =
     useState<PendingProductEditAction | null>(null);
   const productEditPanelRef = useRef<ProductEditPanelHandle>(null);
+  const productListScrollRef = useRef<HTMLDivElement>(null);
 
   const [isPortrait, setIsPortrait] = useState(false);
 
@@ -306,6 +307,32 @@ export default function App() {
     setIsDeleteMode(false);
     setIsProductDeleteConfirmOpen(false);
     showToast("商品を削除しました");
+  };
+
+  const handleAddProductFromEditMode = () => {
+    if (isDeleteMode) return;
+
+    const newProduct: Product = {
+      id: Date.now().toString(),
+      name: "商品名未設定",
+      price: 0,
+      stock: 0,
+    };
+
+    setProducts((prevProducts) => [...prevProducts, newProduct]);
+    setSelectedEditingProductId(newProduct.id);
+    setIsProductEditMode(true);
+    showToast("商品を追加しました");
+
+    requestAnimationFrame(() => {
+      const scrollElement = productListScrollRef.current;
+      if (!scrollElement) return;
+
+      scrollElement.scrollTo({
+        top: scrollElement.scrollHeight,
+        behavior: "smooth",
+      });
+    });
   };
 
   const handleCancelProductEditAction = () => {
@@ -1204,7 +1231,10 @@ export default function App() {
         {currentTab === "sales" && (
           <div className="h-full flex">
             <div className="relative flex-1 overflow-hidden">
-              <div className="h-full p-6 pb-20 overflow-y-auto flex flex-col">
+              <div
+                ref={productListScrollRef}
+                className="h-full p-6 pb-20 overflow-y-auto flex flex-col"
+              >
                 <div className="mb-4 flex items-center gap-4">
                   <div className="flex gap-2 flex-wrap">
                     {categories.map((category) => (
@@ -1310,8 +1340,12 @@ export default function App() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => {}}
-                      className="w-10 h-10 rounded-full bg-transparent border border-primary text-primary hover:bg-primary/10 flex items-center justify-center transition-all active:scale-[0.96]"
+                      onClick={handleAddProductFromEditMode}
+                      disabled={isDeleteMode}
+                      className={`w-10 h-10 rounded-full bg-transparent border border-primary text-primary flex items-center justify-center transition-all active:scale-[0.96] ${isDeleteMode
+                        ? "opacity-40 cursor-not-allowed"
+                        : "hover:bg-primary/10"
+                        }`}
                       aria-label="商品追加"
                       title="商品追加"
                     >
