@@ -24,7 +24,7 @@ export function NotificationPopover({
         className="fixed inset-0 z-40"
         onClick={onClose}
       />
-      <div className="absolute top-full right-0 mt-2 w-80 bg-background border border-border rounded-lg shadow-lg z-50">
+      <div className="absolute left-full top-0 ml-3 w-80 bg-background border border-border rounded-lg shadow-lg z-50">
         <div className="p-4 border-b border-border">
           <div className="flex items-center gap-2 text-warning">
             <Package className="w-5 h-5" />

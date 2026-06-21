@@ -6,7 +6,6 @@ import {
   Settings as SettingsIcon,
   Banknote,
   QrCode,
-  BookOpen,
   Plus,
   Bell,
   Shield,
@@ -14,6 +13,8 @@ import {
   Check,
   FileUp,
   Trash2,
+  Wifi,
+  WifiOff,
 } from "lucide-react";
 import { ProductCard } from "./components/ProductCard";
 import {
@@ -43,7 +44,6 @@ import { ThankYouModal } from "./components/ThankYouModal";
 import { UnshippedItemsModal } from "./components/UnshippedItemsModal";
 import { NotificationPopover } from "./components/NotificationPopover";
 import { ThemeModal } from "./components/ThemeModal";
-import { OnlineStatus } from "./components/OnlineStatus";
 import { SalesStyleModal } from "./components/SalesStyleModal";
 import { SalesHistoryHelpModal } from "./components/SalesHistoryHelpModal";
 import { SummaryHelpModal } from "./components/SummaryHelpModal";
@@ -139,6 +139,7 @@ export default function App() {
   const [isSalesHistoryHelpOpen, setIsSalesHistoryHelpOpen] = useState(false);
   const [isOwnerMode, setIsOwnerMode] = useState(false);
   const [isOwnerModeMenuOpen, setIsOwnerModeMenuOpen] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isProductEditMode, setIsProductEditMode] = useState(false);
   const [selectedEditingProductId, setSelectedEditingProductId] = useState<
     string | null
@@ -662,6 +663,19 @@ export default function App() {
 
     productReorderPositionsRef.current = new Map();
   }, [productReorderPreviewProducts, products]);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     if (!isProductReorderDragging) return;
@@ -1363,6 +1377,20 @@ export default function App() {
   const selectedEditingProduct =
     products.find((product) => product.id === selectedEditingProductId) ??
     null;
+  const unshippedItems = shippingItems.filter((item) => !item.isShipped);
+  const hasUnshippedItems = unshippedItems.length > 0;
+
+  const isLeftNavHelpActive = isHelpOpen;
+  const isLeftNavTabActive = (tab: AppTab) =>
+    !isLeftNavHelpActive && currentTab === tab;
+  const getLeftNavItemClass = (isActive: boolean, isInteractive = false) =>
+    `flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
+      isActive
+        ? "bg-white text-black"
+        : `text-muted-foreground ${
+            isInteractive ? "hover:bg-secondary hover:text-foreground" : ""
+          }`
+    }`;
 
   if (isPortrait) {
     const isDarkMode = themeMode === "dark";
@@ -1409,17 +1437,177 @@ export default function App() {
   }
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-background text-foreground overflow-hidden">      {isTestMode && (
-      <div className="bg-warning text-warning-foreground px-6 py-2 text-center flex items-center justify-center gap-4">
-        <span>テストモード中 - 販売履歴に記録されません</span>
-        <button
-          onClick={() => setShowTestModeExitConfirm(true)}
-          className="px-3 py-1 bg-warning-foreground text-warning rounded text-sm hover:opacity-90"
+    <div className="fixed inset-0 flex bg-background text-foreground overflow-hidden">
+      <aside className="flex w-[72px] shrink-0 flex-col items-center border-r border-border bg-card/90 py-4">
+        <nav
+          className="flex flex-col items-center gap-3"
+          aria-label="左ナビ"
         >
-          終了
-        </button>
-      </div>
-    )}
+          <button
+            type="button"
+            onClick={() => setIsAppInfoOpen(true)}
+            className="flex h-12 w-12 items-center justify-center rounded-xl transition-opacity hover:opacity-80"
+            title="About Liveppon"
+            aria-label="About Livepponを開く"
+          >
+            <img
+              src={
+                themeMode === "dark"
+                  ? "/liveppon-symbol-dark.svg"
+                  : "/liveppon-symbol-light.svg"
+              }
+              alt=""
+              className="h-8 w-8"
+            />
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              isOwnerMode ? setIsOwnerModeMenuOpen(true) : handleOwnerLogin()
+            }
+            className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${
+              isOwnerMode
+                ? "border-primary/40 bg-primary/20 text-primary"
+                : "border-border text-muted-foreground hover:bg-secondary hover:text-foreground"
+            }`}
+            title={isOwnerMode ? "オーナーモード中" : "オーナーモードを開始"}
+            aria-label={
+              isOwnerMode ? "オーナーモード中" : "オーナーモードを開始"
+            }
+          >
+            <Shield className="h-5 w-5" />
+          </button>
+
+          <div
+            className={`flex h-10 w-10 items-center justify-center rounded-full ${
+              isOnline
+                ? "bg-primary/20 text-primary"
+                : "bg-orange-500/20 text-orange-400"
+            }`}
+            title={isOnline ? "オンライン" : "オフライン利用中"}
+            aria-label={isOnline ? "オンライン" : "オフライン利用中"}
+          >
+            {isOnline ? (
+              <Wifi className="h-5 w-5" />
+            ) : (
+              <WifiOff className="h-5 w-5" />
+            )}
+          </div>
+
+          <div className="my-1 h-px w-8 bg-border" />
+
+          <button
+            type="button"
+            onClick={() => handleChangeTab("sales")}
+            className={getLeftNavItemClass(
+              isLeftNavTabActive("sales"),
+              true
+            )}
+            title="販売"
+            aria-label="販売"
+          >
+            <ShoppingBag className="h-5 w-5" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleChangeTab("history")}
+            className={getLeftNavItemClass(
+              isLeftNavTabActive("history"),
+              true
+            )}
+            title="履歴"
+            aria-label="履歴"
+          >
+            <History className="h-5 w-5" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleChangeTab("summary")}
+            className={getLeftNavItemClass(
+              isLeftNavTabActive("summary"),
+              true
+            )}
+            title="サマリー"
+            aria-label="売上サマリー"
+          >
+            <TrendingUp className="h-5 w-5" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleOpenHelp("guide")}
+            className={getLeftNavItemClass(isLeftNavHelpActive, true)}
+            title="使い方"
+            aria-label="使い方"
+          >
+            <BeginnerIcon className="h-5 w-5" />
+          </button>
+
+          <div
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground"
+            title="編集"
+            aria-label="編集"
+          >
+            <Edit className="h-5 w-5" />
+          </div>
+
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+              className={`relative flex h-10 w-10 items-center justify-center rounded-xl transition-colors ${
+                hasUnshippedItems
+                  ? "text-warning hover:bg-warning/10"
+                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+              }`}
+              title="通知"
+              aria-label="通知"
+            >
+              <Bell className="h-5 w-5" />
+              {hasUnshippedItems && (
+                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-warning" />
+              )}
+            </button>
+            {isNotificationOpen && (
+              <NotificationPopover
+                isOpen={isNotificationOpen}
+                onClose={() => setIsNotificationOpen(false)}
+                shippingItems={shippingItems}
+                onViewDetails={() => {
+                  setIsNotificationOpen(false);
+                  setIsUnshippedItemsOpen(true);
+                }}
+              />
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsSettingsOpen(true)}
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            title="設定"
+            aria-label="設定"
+          >
+            <SettingsIcon className="h-5 w-5" />
+          </button>
+        </nav>
+      </aside>
+
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        {isTestMode && (
+          <div className="bg-warning text-warning-foreground px-6 py-2 text-center flex items-center justify-center gap-4">
+            <span>テストモード中 - 販売履歴に記録されません</span>
+            <button
+              onClick={() => setShowTestModeExitConfirm(true)}
+              className="px-3 py-1 bg-warning-foreground text-warning rounded text-sm hover:opacity-90"
+            >
+              終了
+            </button>
+          </div>
+        )}
 
       {showTestModeExitConfirm && (
         <div
@@ -1463,123 +1651,6 @@ export default function App() {
           </div>
         </div>
       )}
-
-      <header className="bg-card border-b border-border px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-8">
-
-
-          <button
-            type="button"
-            onClick={() => setIsAppInfoOpen(true)}
-            className="hover:opacity-80 transition-opacity"
-            aria-label="アプリ情報を開く"
-          >
-            <img
-              src={
-                themeMode === "dark"
-                  ? "/liveppon-logo-dark.svg"
-                  : "/liveppon-logo-light.svg"
-              }
-              alt="Liveppon"
-              className="h-8 w-auto"
-            />
-          </button>
-
-
-          <nav className="flex gap-2">
-            <button
-              onClick={() => handleChangeTab("sales")}
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${currentTab === "sales"
-                ? "bg-primary text-primary-foreground"
-                : "hover:bg-secondary"
-                }`}
-            >
-              <ShoppingBag className="w-4 h-4" />
-              販売
-            </button>
-            <button
-              onClick={() => handleChangeTab("history")}
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${currentTab === "history"
-                ? "bg-primary text-primary-foreground"
-                : "hover:bg-secondary"
-                }`}
-            >
-              <History className="w-4 h-4" />
-              履歴
-            </button>
-            <button
-              onClick={() => handleChangeTab("summary")}
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${currentTab === "summary"
-                ? "bg-primary text-primary-foreground"
-                : "hover:bg-secondary"
-                }`}
-            >
-              <TrendingUp className="w-4 h-4" />
-              売上サマリー
-            </button>
-          </nav>
-
-          {shippingItems.filter((item) => !item.isShipped).length > 0 && (
-            <div className="relative">
-              <button
-                onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                className="relative p-2 rounded-lg hover:bg-secondary"
-              >
-                <Bell className="w-5 h-5 text-warning" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-warning rounded-full" />
-              </button>
-              {isNotificationOpen && (
-                <NotificationPopover
-                  isOpen={isNotificationOpen}
-                  onClose={() => setIsNotificationOpen(false)}
-                  shippingItems={shippingItems}
-                  onViewDetails={() => {
-                    setIsNotificationOpen(false);
-                    setIsUnshippedItemsOpen(true);
-                  }}
-                />
-              )}
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2">
-          {isOwnerMode && (
-            <button
-              onClick={() => setIsOwnerModeMenuOpen(true)}
-              className="px-3 py-1 rounded-lg bg-primary/20 text-primary flex items-center gap-1"
-            >
-              <Shield className="w-4 h-4 text-primary" />
-              <span className="text-sm text-primary">オーナーモード</span>
-            </button>
-          )}
-
-          <OnlineStatus />
-
-          <button
-            onClick={() => handleOpenHelp("guide")}
-            title="操作ガイド"
-            aria-label="操作ガイド"
-            className="
-              w-10 h-10
-              rounded-full
-              bg-primary
-              hover:opacity-90
-              flex items-center justify-center
-              transition-all
-             "
-          >
-            <BeginnerIcon className="w-5 h-5 text-primary-foreground" />
-          </button>
-
-          <button
-            onClick={() => setIsSettingsOpen(true)}
-            className="w-10 h-10 rounded-lg hover:bg-secondary flex items-center justify-center"
-          >
-            <SettingsIcon className="w-5 h-5" />
-          </button>
-        </div>
-      </header>
 
       <main className="flex-1 overflow-hidden">
         {currentTab === "sales" && (
@@ -2455,6 +2526,7 @@ export default function App() {
         onCancel={() => setIsProductDeleteConfirmOpen(false)}
         onConfirm={handleConfirmDeleteProducts}
       />
+      </div>
     </div>
 
   );
