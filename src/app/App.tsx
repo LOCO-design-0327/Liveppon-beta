@@ -1592,12 +1592,16 @@ export default function App() {
                 }`}
               >
                 <div className="mb-4 flex items-center gap-4">
-                  <div className="flex gap-2 flex-wrap">
+                  <div className="flex items-center gap-6 whitespace-nowrap">
                     {categories.map((category) => (
                       <button
                         key={category}
                         onClick={() => setSelectedCategory(category)}
-                        className={`px-4 py-2 rounded-full transition-colors ${selectedCategory === category ? "bg-primary text-primary-foreground" : "bg-card hover:bg-card/80 border border-border"} text-[14px]`}
+                        className={`border-b pb-1 text-[14px] transition-colors ${
+                          selectedCategory === category
+                            ? "border-white text-white"
+                            : "border-transparent text-muted-foreground hover:text-foreground"
+                        }`}
                       >
                         {category}
                       </button>
