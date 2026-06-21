@@ -10,8 +10,6 @@ import {
   Bell,
   Shield,
   Edit,
-  Check,
-  FileUp,
   Trash2,
   Wifi,
   WifiOff,
@@ -51,6 +49,7 @@ import { OwnerModeInfoModal } from "./components/OwnerModeInfoModal";
 import { ToastNotification } from "./components/ToastNotification";
 import { UnsavedChangesConfirmModal } from "./components/UnsavedChangesConfirmModal";
 import { ProductDeleteConfirmModal } from "./components/ProductDeleteConfirmModal";
+import { CSVImportModal } from "./components/CSVImportModal";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import type { Product, CartItem, Sale, ShippingItem, SalesStyle } from "./types";
 import {
@@ -79,10 +78,6 @@ export default function App() {
   const [currentTab, setCurrentTab] = useState<AppTab>("sales");
   const [isSummaryHelpOpen, setIsSummaryHelpOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("すべて");
-  const [hideOutOfStock, setHideOutOfStock] = useLocalStorage<boolean>(
-    "hideOutOfStock",
-    false
-  );
   const [salesStyle, setSalesStyle] = useLocalStorage<SalesStyle | null>(
     "salesStyle",
     null
@@ -124,6 +119,9 @@ export default function App() {
   const [isThankYouOpen, setIsThankYouOpen] = useState(false);
   const [isUnshippedItemsOpen, setIsUnshippedItemsOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [isSalesToolbarMenuOpen, setIsSalesToolbarMenuOpen] = useState(false);
+  const [isSalesToolbarCSVImportOpen, setIsSalesToolbarCSVImportOpen] =
+    useState(false);
   const [swipedSaleId, setSwipedSaleId] = useState<string | null>(null);
   const [helpOpenedFrom, setHelpOpenedFrom] = useState<"guide" | "settings">(
     "guide"
@@ -565,6 +563,76 @@ export default function App() {
     });
   };
 
+  const handleSalesToolbarCSVImport = (importedProducts: Product[]) => {
+    const existingIds = new Set(products.map((product) => product.id));
+    const added = importedProducts.filter(
+      (product) => !existingIds.has(product.id)
+    );
+    const updated = importedProducts.filter((product) =>
+      existingIds.has(product.id)
+    );
+
+    const nextProducts = [
+      ...products.map((product) => {
+        const updatedProduct = importedProducts.find(
+          (importedProduct) => importedProduct.id === product.id
+        );
+        return updatedProduct || product;
+      }),
+      ...added,
+    ];
+
+    setProducts(nextProducts);
+    addOperationLog(
+      "CSVインポート",
+      `追加：${added.length}件 / 更新：${updated.length}件`,
+      "",
+      `合計${importedProducts.length}件`
+    );
+    setIsSalesToolbarCSVImportOpen(false);
+  };
+
+  const handleExportProductsCSV = () => {
+    const escapeCSVValue = (value: string | number | undefined) => {
+      const text = value === undefined ? "" : String(value);
+      return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+    };
+    const headers = [
+      "id",
+      "name",
+      "price",
+      "stock",
+      "image",
+      "category",
+      "deliveryType",
+      "visible",
+    ];
+    const rows = products.map((product) => [
+      product.id,
+      product.name,
+      product.price,
+      product.stock,
+      product.imageUrl || "",
+      product.category || "",
+      product.deliveryType || "",
+      "true",
+    ]);
+
+    const csv = [headers, ...rows]
+      .map((row) => row.map(escapeCSVValue).join(","))
+      .join("\n");
+    const blob = new Blob(["﻿" + csv], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `liveppon_products_${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+
+    addOperationLog("商品CSVエクスポート", `${products.length}件の商品を書き出しました`);
+  };
+
   const handleCancelProductEditAction = () => {
     setPendingProductEditAction(null);
   };
@@ -676,6 +744,12 @@ export default function App() {
       window.removeEventListener("offline", handleOffline);
     };
   }, []);
+
+  useEffect(() => {
+    if (!isProductEditMode) {
+      setIsSalesToolbarMenuOpen(false);
+    }
+  }, [isProductEditMode]);
 
   useEffect(() => {
     if (!isProductReorderDragging) return;
@@ -1370,8 +1444,7 @@ export default function App() {
   const filteredProducts = visibleProducts.filter((product) => {
     const categoryMatch =
       selectedCategory === "すべて" || product.category === selectedCategory;
-    const stockMatch = !hideOutOfStock || product.stock > 0;
-    return categoryMatch && stockMatch;
+    return categoryMatch;
   });
 
   const selectedEditingProduct =
@@ -1546,13 +1619,19 @@ export default function App() {
             <BeginnerIcon className="h-5 w-5" />
           </button>
 
-          <div
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground"
-            title="編集"
-            aria-label="編集"
+          <button
+            type="button"
+            onClick={handleToggleProductEditMode}
+            className={getLeftNavItemClass(isProductEditMode, true)}
+            title={
+              isProductEditMode ? "商品編集を終了" : "商品編集モードを開始"
+            }
+            aria-label={
+              isProductEditMode ? "商品編集を終了" : "商品編集モードを開始"
+            }
           >
             <Edit className="h-5 w-5" />
-          </div>
+          </button>
 
           <div className="relative">
             <button
@@ -1678,22 +1757,101 @@ export default function App() {
                       </button>
                     ))}
                   </div>
-                  <div className="flex items-center gap-3 ml-auto mr-1 whitespace-nowrap">
-                    <span className="text-sm text-foreground">
-                      在庫0を隠す
-                    </span>
+                  <div className="ml-auto mr-1 flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => setHideOutOfStock(!hideOutOfStock)}
-                      className={`relative inline-flex h-7 w-14 flex-shrink-0 items-center rounded-full transition-colors ${hideOutOfStock ? "bg-primary" : "bg-secondary"
-                        }`}
-                      aria-pressed={hideOutOfStock}
+                      onClick={handleToggleProductEditMode}
+                      className={`flex h-9 w-9 items-center justify-center rounded-full border transition-colors ${
+                        isProductEditMode
+                          ? "border-white bg-white text-black"
+                          : "border-border text-muted-foreground hover:border-white/60 hover:text-white"
+                      }`}
+                      title={
+                        isProductEditMode
+                          ? "商品編集を終了"
+                          : "商品編集モードを開始"
+                      }
+                      aria-label={
+                        isProductEditMode
+                          ? "商品編集を終了"
+                          : "商品編集モードを開始"
+                      }
                     >
-                      <span
-                        className={`inline-block h-5 w-5 rounded-full bg-white transition-transform ${hideOutOfStock ? "translate-x-8" : "translate-x-1"
-                          }`}
-                      />
+                      <Edit className="h-5 w-5" />
                     </button>
+                    {isProductEditMode && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={handleAddProductFromEditMode}
+                          className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-white/60 hover:text-white"
+                          title="商品追加"
+                          aria-label="商品追加"
+                        >
+                          <Plus className="h-5 w-5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleProductDeleteFabClick}
+                          className={`flex h-9 w-9 items-center justify-center rounded-full border transition-colors ${
+                            isDeleteMode
+                              ? "border-destructive bg-destructive text-destructive-foreground hover:opacity-90"
+                              : "border-destructive text-destructive hover:bg-destructive/10"
+                          }`}
+                          title="削除"
+                          aria-label="削除"
+                        >
+                          <Trash2 className="h-5 w-5" />
+                        </button>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setIsSalesToolbarMenuOpen(
+                                (isOpen) => !isOpen
+                              )
+                            }
+                            className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-white/60 hover:text-white"
+                            title="その他"
+                            aria-label="その他"
+                          >
+                            <span className="text-lg leading-none">…</span>
+                          </button>
+                          {isSalesToolbarMenuOpen && (
+                            <>
+                              <div
+                                className="fixed inset-0 z-40"
+                                onClick={() =>
+                                  setIsSalesToolbarMenuOpen(false)
+                                }
+                              />
+                              <div className="absolute right-0 top-full z-50 mt-2 w-44 overflow-hidden rounded-lg border border-border bg-background shadow-lg">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setIsSalesToolbarMenuOpen(false);
+                                    setIsSalesToolbarCSVImportOpen(true);
+                                  }}
+                                  className="w-full px-4 py-3 text-left text-sm text-foreground hover:bg-secondary"
+                                >
+                                  CSVインポート
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setIsSalesToolbarMenuOpen(false);
+                                    handleExportProductsCSV();
+                                  }}
+                                  className="w-full px-4 py-3 text-left text-sm text-foreground hover:bg-secondary"
+                                >
+                                  CSVエクスポート
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -1727,7 +1885,7 @@ export default function App() {
                         <div
                           key={product.id}
                           data-product-slot-id={product.id}
-                          className="relative aspect-square"
+                          className="relative aspect-[25/28]"
                         >
                           <ProductCard
                             {...product}
@@ -1779,66 +1937,6 @@ export default function App() {
                     </div>
                   )}
                 </div>
-              </div>
-
-              <div className="absolute bottom-6 right-6 z-50">
-                {isProductEditMode ? (
-                  <div className="flex flex-col gap-3">
-                    <button
-                      type="button"
-                      onClick={() => {}}
-                      className="w-10 h-10 rounded-full bg-transparent border border-primary text-primary hover:bg-primary/10 flex items-center justify-center transition-all active:scale-[0.96]"
-                      aria-label="CSV"
-                      title="CSV"
-                    >
-                      <FileUp className="w-5 h-5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleAddProductFromEditMode}
-                      disabled={isDeleteMode}
-                      className={`w-10 h-10 rounded-full bg-transparent border border-primary text-primary flex items-center justify-center transition-all active:scale-[0.96] ${isDeleteMode
-                        ? "opacity-40 cursor-not-allowed"
-                        : "hover:bg-primary/10"
-                        }`}
-                      aria-label="商品追加"
-                      title="商品追加"
-                    >
-                      <Plus className="w-5 h-5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleProductDeleteFabClick}
-                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-[0.96] ${isDeleteMode
-                        ? "bg-destructive text-destructive-foreground hover:opacity-90"
-                        : "bg-transparent border border-destructive text-destructive hover:bg-destructive/10"
-                        }`}
-                      aria-label="削除"
-                      title="削除"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleToggleProductEditMode}
-                      className="w-10 h-10 rounded-full bg-primary text-primary-foreground hover:opacity-90 flex items-center justify-center transition-all active:scale-[0.96]"
-                      aria-label="商品編集を終了"
-                      title="商品編集を終了"
-                    >
-                      <Check className="w-5 h-5" />
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleToggleProductEditMode}
-                    className="w-10 h-10 rounded-full bg-transparent border border-primary text-primary hover:bg-primary/10 flex items-center justify-center transition-all active:scale-[0.96]"
-                    aria-label="商品編集モードを開始"
-                    title="商品編集モードを開始"
-                  >
-                    <Edit className="w-5 h-5" />
-                  </button>
-                )}
               </div>
             </div>
 
@@ -2337,6 +2435,12 @@ export default function App() {
         onShowToast={showToast}
         lowStockThreshold={lowStockThreshold}
         onUpdateLowStockThreshold={setLowStockThreshold}
+      />
+
+      <CSVImportModal
+        isOpen={isSalesToolbarCSVImportOpen}
+        onClose={() => setIsSalesToolbarCSVImportOpen(false)}
+        onImport={handleSalesToolbarCSVImport}
       />
 
       <QRSettingsModal
