@@ -8,7 +8,10 @@ import {
   QrCode,
   Plus,
   Bell,
+  ChevronLeft,
+  ChevronRight,
   Shield,
+  Lock,
   Edit,
   Trash2,
   Wifi,
@@ -41,6 +44,7 @@ import { CancelReasonModal } from "./components/CancelReasonModal";
 import { ThankYouModal } from "./components/ThankYouModal";
 import { UnshippedItemsModal } from "./components/UnshippedItemsModal";
 import { NotificationPopover } from "./components/NotificationPopover";
+import { OnlineStatusInfoModal } from "./components/OnlineStatus";
 import { ThemeModal } from "./components/ThemeModal";
 import { SalesStyleModal } from "./components/SalesStyleModal";
 import { SalesHistoryHelpModal } from "./components/SalesHistoryHelpModal";
@@ -122,6 +126,14 @@ export default function App() {
   const [isSalesToolbarMenuOpen, setIsSalesToolbarMenuOpen] = useState(false);
   const [isSalesToolbarCSVImportOpen, setIsSalesToolbarCSVImportOpen] =
     useState(false);
+  const [
+    isSalesToolbarEditToolsMounted,
+    setIsSalesToolbarEditToolsMounted,
+  ] = useState(false);
+  const [
+    isSalesToolbarEditToolsVisible,
+    setIsSalesToolbarEditToolsVisible,
+  ] = useState(false);
   const [isSampleDataConfirmOpen, setIsSampleDataConfirmOpen] =
     useState(false);
   const [swipedSaleId, setSwipedSaleId] = useState<string | null>(null);
@@ -139,7 +151,10 @@ export default function App() {
   const [isSalesHistoryHelpOpen, setIsSalesHistoryHelpOpen] = useState(false);
   const [isOwnerMode, setIsOwnerMode] = useState(false);
   const [isOwnerModeMenuOpen, setIsOwnerModeMenuOpen] = useState(false);
+  const [isLeftNavCollapsed, setIsLeftNavCollapsed] =
+    useLocalStorage<boolean>("leftNavCollapsed", false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isOnlineStatusInfoOpen, setIsOnlineStatusInfoOpen] = useState(false);
   const [isProductEditMode, setIsProductEditMode] = useState(false);
   const [selectedEditingProductId, setSelectedEditingProductId] = useState<
     string | null
@@ -763,6 +778,31 @@ export default function App() {
     if (!isProductEditMode) {
       setIsSalesToolbarMenuOpen(false);
     }
+  }, [isProductEditMode]);
+
+  useEffect(() => {
+    let animationFrameId = 0;
+    let hideTimerId = 0;
+
+    if (isProductEditMode) {
+      setIsSalesToolbarEditToolsMounted(true);
+      animationFrameId = window.requestAnimationFrame(() => {
+        setIsSalesToolbarEditToolsVisible(true);
+      });
+
+      return () => {
+        window.cancelAnimationFrame(animationFrameId);
+      };
+    }
+
+    setIsSalesToolbarEditToolsVisible(false);
+    hideTimerId = window.setTimeout(() => {
+      setIsSalesToolbarEditToolsMounted(false);
+    }, 100);
+
+    return () => {
+      window.clearTimeout(hideTimerId);
+    };
   }, [isProductEditMode]);
 
   useEffect(() => {
@@ -1460,6 +1500,9 @@ export default function App() {
       selectedCategory === "すべて" || product.category === selectedCategory;
     return categoryMatch;
   });
+  const productGridTemplateColumns = isLeftNavCollapsed
+    ? "repeat(auto-fit, minmax(clamp(132px, 22%, 220px), 1fr))"
+    : "repeat(auto-fit, minmax(clamp(156px, 30%, 280px), 1fr))";
 
   const selectedEditingProduct =
     products.find((product) => product.id === selectedEditingProductId) ??
@@ -1467,17 +1510,24 @@ export default function App() {
   const unshippedItems = shippingItems.filter((item) => !item.isShipped);
   const hasUnshippedItems = unshippedItems.length > 0;
 
-  const isLeftNavHelpActive = isHelpOpen;
-  const isLeftNavTabActive = (tab: AppTab) =>
-    !isLeftNavHelpActive && currentTab === tab;
-  const getLeftNavItemClass = (isActive: boolean, isInteractive = false) =>
-    `flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
+  const isLeftNavTabActive = (tab: AppTab) => currentTab === tab;
+  const getLeftNavLabeledItemClass = (
+    isActive: boolean,
+    isInteractive = false
+  ) =>
+    `flex h-10 w-full items-center rounded-xl text-sm font-medium transition-colors ${
+      isLeftNavCollapsed ? "justify-center px-0" : "gap-3 px-3"
+    } ${
       isActive
         ? "bg-white text-black"
         : `text-muted-foreground ${
             isInteractive ? "hover:bg-secondary hover:text-foreground" : ""
           }`
     }`;
+  const getLeftNavLabelClass = (extraClass = "") =>
+    `overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-150 ease-out ${
+      isLeftNavCollapsed ? "max-w-0 opacity-0" : "max-w-[132px] opacity-100"
+    } ${extraClass}`;
 
   if (isPortrait) {
     const isDarkMode = themeMode === "dark";
@@ -1525,17 +1575,37 @@ export default function App() {
 
   return (
     <div className="fixed inset-0 flex bg-background text-foreground overflow-hidden">
-      <aside className="flex w-[72px] shrink-0 flex-col items-center border-r border-border bg-card/90 py-4">
+      <aside
+        className={`relative flex shrink-0 flex-col items-center border-r border-border bg-card/90 px-3 py-4 transition-[width] duration-150 ease-out ${
+          isLeftNavCollapsed ? "w-[80px]" : "w-[200px]"
+        }`}
+      >
+        <button
+          type="button"
+          onClick={() => setIsLeftNavCollapsed((isCollapsed) => !isCollapsed)}
+          className="absolute -right-3 top-1/2 z-30 flex h-9 w-6 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm hover:bg-secondary hover:text-foreground"
+          title={isLeftNavCollapsed ? "左ナビを展開" : "左ナビを収納"}
+          aria-label={isLeftNavCollapsed ? "左ナビを展開" : "左ナビを収納"}
+        >
+          {isLeftNavCollapsed ? (
+            <ChevronRight className="h-4 w-4" />
+          ) : (
+            <ChevronLeft className="h-4 w-4" />
+          )}
+        </button>
+
         <nav
-          className="flex flex-col items-center gap-3"
+          className="flex w-full flex-col items-center gap-3"
           aria-label="左ナビ"
         >
           <button
             type="button"
-            onClick={() => setIsAppInfoOpen(true)}
-            className="flex h-12 w-12 items-center justify-center rounded-xl transition-opacity hover:opacity-80"
-            title="About Liveppon"
-            aria-label="About Livepponを開く"
+            onClick={() => handleChangeTab("sales")}
+            className={`flex h-12 w-full items-center rounded-xl transition-colors hover:bg-secondary ${
+              isLeftNavCollapsed ? "justify-center px-0" : "gap-2 px-3"
+            }`}
+            title="販売画面へ戻る"
+            aria-label="販売画面へ戻る"
           >
             <img
               src={
@@ -1544,7 +1614,16 @@ export default function App() {
                   : "/liveppon-symbol-light.svg"
               }
               alt=""
-              className="h-8 w-8"
+              className="h-8 w-8 shrink-0"
+            />
+            <img
+              src={
+                themeMode === "dark"
+                  ? "/liveppon-logo-dark.svg"
+                  : "/liveppon-logo-light.svg"
+              }
+              alt="Liveppon"
+              className={getLeftNavLabelClass("h-6 min-w-0")}
             />
           </button>
 
@@ -1553,91 +1632,113 @@ export default function App() {
             onClick={() =>
               isOwnerMode ? setIsOwnerModeMenuOpen(true) : handleOwnerLogin()
             }
-            className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${
+            className={`flex h-10 w-full items-center rounded-xl border text-sm font-medium transition-colors ${
+              isLeftNavCollapsed ? "justify-center px-0" : "gap-3 px-3"
+            } ${
               isOwnerMode
                 ? "border-primary/40 bg-primary/20 text-primary"
                 : "border-border text-muted-foreground hover:bg-secondary hover:text-foreground"
             }`}
-            title={isOwnerMode ? "オーナーモード中" : "オーナーモードを開始"}
+            title={isOwnerMode ? "オーナーモード中" : "オーナーロック中"}
             aria-label={
-              isOwnerMode ? "オーナーモード中" : "オーナーモードを開始"
+              isOwnerMode ? "オーナーモード中" : "オーナーロック中"
             }
           >
-            <Shield className="h-5 w-5" />
+            {isOwnerMode ? (
+              <Shield className="h-5 w-5 shrink-0" />
+            ) : (
+              <Lock className="h-5 w-5 shrink-0" />
+            )}
+            <span className={getLeftNavLabelClass()}>
+              {isOwnerMode ? "オーナーモード中" : "オーナーロック中"}
+            </span>
           </button>
 
-          <div
-            className={`flex h-10 w-10 items-center justify-center rounded-full ${
+          <button
+            type="button"
+            onClick={() => setIsOnlineStatusInfoOpen(true)}
+            className={`flex h-10 w-full items-center rounded-xl text-sm font-medium transition-colors ${
+              isLeftNavCollapsed ? "justify-center px-0" : "gap-3 px-3"
+            } ${
               isOnline
-                ? "bg-primary/20 text-primary"
-                : "bg-orange-500/20 text-orange-400"
+                ? "text-primary hover:bg-primary/10"
+                : "text-orange-400 hover:bg-orange-500/10"
             }`}
             title={isOnline ? "オンライン" : "オフライン利用中"}
             aria-label={isOnline ? "オンライン" : "オフライン利用中"}
           >
             {isOnline ? (
-              <Wifi className="h-5 w-5" />
+              <Wifi className="h-5 w-5 shrink-0" />
             ) : (
-              <WifiOff className="h-5 w-5" />
+              <WifiOff className="h-5 w-5 shrink-0" />
             )}
-          </div>
+            <span className={getLeftNavLabelClass()}>
+              {isOnline ? "オンライン" : "オフライン"}
+            </span>
+          </button>
 
-          <div className="my-1 h-px w-8 bg-border" />
+          <div className="my-1 h-px w-full bg-border" />
 
           <button
             type="button"
             onClick={() => handleChangeTab("sales")}
-            className={getLeftNavItemClass(
+            className={getLeftNavLabeledItemClass(
               isLeftNavTabActive("sales"),
               true
             )}
             title="販売"
             aria-label="販売"
           >
-            <ShoppingBag className="h-5 w-5" />
+            <ShoppingBag className="h-5 w-5 shrink-0" />
+            <span className={getLeftNavLabelClass()}>販売</span>
           </button>
 
           <button
             type="button"
             onClick={() => handleChangeTab("history")}
-            className={getLeftNavItemClass(
+            className={getLeftNavLabeledItemClass(
               isLeftNavTabActive("history"),
               true
             )}
-            title="履歴"
-            aria-label="履歴"
+            title="販売履歴"
+            aria-label="販売履歴"
           >
-            <History className="h-5 w-5" />
+            <History className="h-5 w-5 shrink-0" />
+            <span className={getLeftNavLabelClass()}>販売履歴</span>
           </button>
 
           <button
             type="button"
             onClick={() => handleChangeTab("summary")}
-            className={getLeftNavItemClass(
+            className={getLeftNavLabeledItemClass(
               isLeftNavTabActive("summary"),
               true
             )}
-            title="サマリー"
+            title="売上サマリー"
             aria-label="売上サマリー"
           >
-            <TrendingUp className="h-5 w-5" />
+            <TrendingUp className="h-5 w-5 shrink-0" />
+            <span className={getLeftNavLabelClass()}>売上サマリー</span>
           </button>
 
           <button
             type="button"
             onClick={() => handleOpenHelp("guide")}
-            className={getLeftNavItemClass(isLeftNavHelpActive, true)}
+            className={getLeftNavLabeledItemClass(false, true)}
             title="使い方"
             aria-label="使い方"
           >
-            <BeginnerIcon className="h-5 w-5" />
+            <BeginnerIcon className="h-5 w-5 shrink-0" />
+            <span className={getLeftNavLabelClass()}>使い方</span>
           </button>
 
-          <div className="relative">
+          <div className="relative w-full">
             <button
               type="button"
               onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-              className={`relative flex h-10 w-10 items-center justify-center rounded-xl transition-colors ${
+              className={`relative flex h-10 w-full items-center rounded-xl text-sm font-medium transition-colors ${
+                isLeftNavCollapsed ? "justify-center px-0" : "gap-3 px-3"
+              } ${
                 hasUnshippedItems
                   ? "text-warning hover:bg-warning/10"
                   : "text-muted-foreground hover:bg-secondary hover:text-foreground"
@@ -1645,10 +1746,13 @@ export default function App() {
               title="通知"
               aria-label="通知"
             >
-              <Bell className="h-5 w-5" />
-              {hasUnshippedItems && (
-                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-warning" />
-              )}
+              <span className="relative flex h-5 w-5 shrink-0 items-center justify-center">
+                <Bell className="h-5 w-5" />
+                {hasUnshippedItems && (
+                  <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-warning" />
+                )}
+              </span>
+              <span className={getLeftNavLabelClass()}>通知</span>
             </button>
             {isNotificationOpen && (
               <NotificationPopover
@@ -1666,11 +1770,12 @@ export default function App() {
           <button
             type="button"
             onClick={() => setIsSettingsOpen(true)}
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            className={getLeftNavLabeledItemClass(false, true)}
             title="設定"
             aria-label="設定"
           >
-            <SettingsIcon className="h-5 w-5" />
+            <SettingsIcon className="h-5 w-5 shrink-0" />
+            <span className={getLeftNavLabelClass()}>設定</span>
           </button>
         </nav>
       </aside>
@@ -1758,8 +1863,14 @@ export default function App() {
                     ))}
                   </div>
                   <div className="ml-auto mr-1 flex items-center gap-2">
-                    {isProductEditMode ? (
-                      <>
+                    {isSalesToolbarEditToolsMounted ? (
+                      <div
+                        className={`flex items-center gap-2 transform-gpu transition-[opacity,transform] ${
+                          isSalesToolbarEditToolsVisible
+                            ? "translate-x-0 opacity-100 duration-150 ease-out"
+                            : "translate-x-1 opacity-0 duration-100 ease-in pointer-events-none"
+                        }`}
+                      >
                         <button
                           type="button"
                           onClick={handleAddProductFromEditMode}
@@ -1842,14 +1953,14 @@ export default function App() {
                         <button
                           type="button"
                           onClick={handleToggleProductEditMode}
-                          className="flex h-9 items-center justify-center gap-1.5 rounded-full border border-primary bg-primary px-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                          className="flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-primary bg-primary px-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
                           title="商品編集を終了"
                           aria-label="商品編集を終了"
                         >
                           <Edit className="h-4 w-4" />
                           <span>完了</span>
                         </button>
-                      </>
+                      </div>
                     ) : (
                       <button
                         type="button"
@@ -1889,7 +2000,10 @@ export default function App() {
                       このカテゴリの商品はありません
                     </div>
                   ) : (
-                    <div className="grid grid-cols-4 gap-4">
+                    <div
+                      className="grid gap-4"
+                      style={{ gridTemplateColumns: productGridTemplateColumns }}
+                    >
                       {filteredProducts.map((product) => (
                         <div
                           key={product.id}
@@ -2409,6 +2523,11 @@ export default function App() {
       <AppInfoModal
         isOpen={isAppInfoOpen}
         onClose={() => setIsAppInfoOpen(false)}
+      />
+
+      <OnlineStatusInfoModal
+        isOpen={isOnlineStatusInfoOpen}
+        onClose={() => setIsOnlineStatusInfoOpen(false)}
       />
 
       <OwnerPinModal

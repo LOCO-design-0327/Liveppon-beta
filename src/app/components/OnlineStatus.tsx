@@ -40,52 +40,69 @@ export function OnlineStatus() {
         )}
       </button>
 
-      {showInfo && (
-        <div
-          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
-          onClick={() => setShowInfo(false)}
-        >
-          <div
-            className="bg-background border border-border rounded-lg w-[600px] max-h-[85vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-              <h2 className="text-xl font-bold">接続状態について</h2>
-
-              <button
-                onClick={() => setShowInfo(false)}
-                className="w-10 h-10 rounded hover:bg-secondary flex items-center justify-center"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4 text-sm">
-              <p>
-                Livepponは、インターネットに接続していない状態でも販売操作を続けられます。
-              </p>
-
-              <div className="rounded-lg bg-secondary/50 p-4 space-y-2">
-                <p className="font-bold">🟢 オンライン</p>
-                <p className="text-muted-foreground">
-                  インターネットに接続されています。
-                </p>
-              </div>
-
-              <div className="rounded-lg bg-secondary/50 p-4 space-y-2">
-                <p className="font-bold">🟠 オフライン利用中</p>
-                <p className="text-muted-foreground">
-                  インターネットに接続していませんが、Livepponの基本的な販売操作はそのまま利用できます。
-                </p>
-              </div>
-
-              <p className="text-muted-foreground">
-                ただし、ブラウザや端末の状態によってはデータが失われる可能性があります。大切なイベント前後にはバックアップを作成しておくことをおすすめします。
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+      <OnlineStatusInfoModal
+        isOpen={showInfo}
+        onClose={() => setShowInfo(false)}
+      />
     </>
+  );
+}
+
+interface OnlineStatusInfoModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export function OnlineStatusInfoModal({
+  isOpen,
+  onClose,
+}: OnlineStatusInfoModalProps) {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+      onClick={onClose}
+    >
+      <div
+        className="bg-background border border-border rounded-lg w-[600px] max-h-[85vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <h2 className="text-xl font-bold">接続状態について</h2>
+
+          <button
+            onClick={onClose}
+            className="w-10 h-10 rounded hover:bg-secondary flex items-center justify-center"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-4 text-sm">
+          <p>
+            Livepponは、インターネットに接続していない状態でも販売操作を続けられます。
+          </p>
+
+          <div className="rounded-lg bg-secondary/50 p-4 space-y-2">
+            <p className="font-bold">🟢 オンライン</p>
+            <p className="text-muted-foreground">
+              インターネットに接続されています。
+            </p>
+          </div>
+
+          <div className="rounded-lg bg-secondary/50 p-4 space-y-2">
+            <p className="font-bold">🟠 オフライン利用中</p>
+            <p className="text-muted-foreground">
+              インターネットに接続していませんが、Livepponの基本的な販売操作はそのまま利用できます。
+            </p>
+          </div>
+
+          <p className="text-muted-foreground">
+            ただし、ブラウザや端末の状態によってはデータが失われる可能性があります。大切なイベント前後にはバックアップを作成しておくことをおすすめします。
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }
