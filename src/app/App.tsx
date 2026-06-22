@@ -1501,8 +1501,8 @@ export default function App() {
     return categoryMatch;
   });
   const productGridTemplateColumns = isLeftNavCollapsed
-    ? "repeat(auto-fit, minmax(clamp(132px, 22%, 220px), 1fr))"
-    : "repeat(auto-fit, minmax(clamp(156px, 30%, 280px), 1fr))";
+    ? "repeat(auto-fill, minmax(clamp(132px, 22%, 220px), 1fr))"
+    : "repeat(auto-fill, minmax(clamp(156px, 30%, 280px), 1fr))";
 
   const selectedEditingProduct =
     products.find((product) => product.id === selectedEditingProductId) ??
@@ -1595,188 +1595,190 @@ export default function App() {
         </button>
 
         <nav
-          className="flex w-full flex-col items-center gap-3"
+          className="flex min-h-0 w-full flex-1 flex-col"
           aria-label="左ナビ"
         >
-          <button
-            type="button"
-            onClick={() => handleChangeTab("sales")}
-            className={`flex h-12 w-full items-center rounded-xl transition-colors hover:bg-secondary ${
-              isLeftNavCollapsed ? "justify-center px-0" : "gap-2 px-3"
-            }`}
-            title="販売画面へ戻る"
-            aria-label="販売画面へ戻る"
-          >
-            <img
-              src={
-                themeMode === "dark"
-                  ? "/liveppon-symbol-dark.svg"
-                  : "/liveppon-symbol-light.svg"
-              }
-              alt=""
-              className="h-8 w-8 shrink-0"
-            />
-            <img
-              src={
-                themeMode === "dark"
-                  ? "/liveppon-logo-dark.svg"
-                  : "/liveppon-logo-light.svg"
-              }
-              alt="Liveppon"
-              className={getLeftNavLabelClass("h-6 min-w-0")}
-            />
-          </button>
-
-          <button
-            type="button"
-            onClick={() =>
-              isOwnerMode ? setIsOwnerModeMenuOpen(true) : handleOwnerLogin()
-            }
-            className={`flex h-10 w-full items-center rounded-xl border text-sm font-medium transition-colors ${
-              isLeftNavCollapsed ? "justify-center px-0" : "gap-3 px-3"
-            } ${
-              isOwnerMode
-                ? "border-primary/40 bg-primary/20 text-primary"
-                : "border-border text-muted-foreground hover:bg-secondary hover:text-foreground"
-            }`}
-            title={isOwnerMode ? "オーナーモード中" : "オーナーロック中"}
-            aria-label={
-              isOwnerMode ? "オーナーモード中" : "オーナーロック中"
-            }
-          >
-            {isOwnerMode ? (
-              <Shield className="h-5 w-5 shrink-0" />
-            ) : (
-              <Lock className="h-5 w-5 shrink-0" />
-            )}
-            <span className={getLeftNavLabelClass()}>
-              {isOwnerMode ? "オーナーモード中" : "オーナーロック中"}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setIsOnlineStatusInfoOpen(true)}
-            className={`flex h-10 w-full items-center rounded-xl text-sm font-medium transition-colors ${
-              isLeftNavCollapsed ? "justify-center px-0" : "gap-3 px-3"
-            } ${
-              isOnline
-                ? "text-primary hover:bg-primary/10"
-                : "text-orange-400 hover:bg-orange-500/10"
-            }`}
-            title={isOnline ? "オンライン" : "オフライン利用中"}
-            aria-label={isOnline ? "オンライン" : "オフライン利用中"}
-          >
-            {isOnline ? (
-              <Wifi className="h-5 w-5 shrink-0" />
-            ) : (
-              <WifiOff className="h-5 w-5 shrink-0" />
-            )}
-            <span className={getLeftNavLabelClass()}>
-              {isOnline ? "オンライン" : "オフライン"}
-            </span>
-          </button>
-
-          <div className="my-1 h-px w-full bg-border" />
-
-          <button
-            type="button"
-            onClick={() => handleChangeTab("sales")}
-            className={getLeftNavLabeledItemClass(
-              isLeftNavTabActive("sales"),
-              true
-            )}
-            title="販売"
-            aria-label="販売"
-          >
-            <ShoppingBag className="h-5 w-5 shrink-0" />
-            <span className={getLeftNavLabelClass()}>販売</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleChangeTab("history")}
-            className={getLeftNavLabeledItemClass(
-              isLeftNavTabActive("history"),
-              true
-            )}
-            title="販売履歴"
-            aria-label="販売履歴"
-          >
-            <History className="h-5 w-5 shrink-0" />
-            <span className={getLeftNavLabelClass()}>販売履歴</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleChangeTab("summary")}
-            className={getLeftNavLabeledItemClass(
-              isLeftNavTabActive("summary"),
-              true
-            )}
-            title="売上サマリー"
-            aria-label="売上サマリー"
-          >
-            <TrendingUp className="h-5 w-5 shrink-0" />
-            <span className={getLeftNavLabelClass()}>売上サマリー</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleOpenHelp("guide")}
-            className={getLeftNavLabeledItemClass(false, true)}
-            title="使い方"
-            aria-label="使い方"
-          >
-            <BeginnerIcon className="h-5 w-5 shrink-0" />
-            <span className={getLeftNavLabelClass()}>使い方</span>
-          </button>
-
-          <div className="relative w-full">
+          <div className="flex w-full flex-col items-center gap-3">
             <button
               type="button"
-              onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-              className={`relative flex h-10 w-full items-center rounded-xl text-sm font-medium transition-colors ${
-                isLeftNavCollapsed ? "justify-center px-0" : "gap-3 px-3"
-              } ${
-                hasUnshippedItems
-                  ? "text-warning hover:bg-warning/10"
-                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+              onClick={() => handleChangeTab("sales")}
+              className={`flex h-12 w-full items-center rounded-xl transition-colors hover:bg-secondary ${
+                isLeftNavCollapsed ? "justify-center px-0" : "gap-2 px-3"
               }`}
-              title="通知"
-              aria-label="通知"
+              title="販売画面へ戻る"
+              aria-label="販売画面へ戻る"
             >
-              <span className="relative flex h-5 w-5 shrink-0 items-center justify-center">
-                <Bell className="h-5 w-5" />
-                {hasUnshippedItems && (
-                  <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-warning" />
-                )}
-              </span>
-              <span className={getLeftNavLabelClass()}>通知</span>
-            </button>
-            {isNotificationOpen && (
-              <NotificationPopover
-                isOpen={isNotificationOpen}
-                onClose={() => setIsNotificationOpen(false)}
-                shippingItems={shippingItems}
-                onViewDetails={() => {
-                  setIsNotificationOpen(false);
-                  setIsUnshippedItemsOpen(true);
-                }}
+              <img
+                src={
+                  themeMode === "dark"
+                    ? "/liveppon-symbol-dark.svg"
+                    : "/liveppon-symbol-light.svg"
+                }
+                alt=""
+                className="h-8 w-8 shrink-0"
               />
-            )}
+              <img
+                src={
+                  themeMode === "dark"
+                    ? "/liveppon-logo-dark.svg"
+                    : "/liveppon-logo-light.svg"
+                }
+                alt="Liveppon"
+                className={getLeftNavLabelClass("h-6 min-w-0")}
+              />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleChangeTab("sales")}
+              className={getLeftNavLabeledItemClass(
+                isLeftNavTabActive("sales"),
+                true
+              )}
+              title="販売"
+              aria-label="販売"
+            >
+              <ShoppingBag className="h-5 w-5 shrink-0" />
+              <span className={getLeftNavLabelClass()}>販売</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleChangeTab("history")}
+              className={getLeftNavLabeledItemClass(
+                isLeftNavTabActive("history"),
+                true
+              )}
+              title="販売履歴"
+              aria-label="販売履歴"
+            >
+              <History className="h-5 w-5 shrink-0" />
+              <span className={getLeftNavLabelClass()}>販売履歴</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleChangeTab("summary")}
+              className={getLeftNavLabeledItemClass(
+                isLeftNavTabActive("summary"),
+                true
+              )}
+              title="売上サマリー"
+              aria-label="売上サマリー"
+            >
+              <TrendingUp className="h-5 w-5 shrink-0" />
+              <span className={getLeftNavLabelClass()}>売上サマリー</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleOpenHelp("guide")}
+              className={getLeftNavLabeledItemClass(false, true)}
+              title="使い方"
+              aria-label="使い方"
+            >
+              <BeginnerIcon className="h-5 w-5 shrink-0" />
+              <span className={getLeftNavLabelClass()}>使い方</span>
+            </button>
+
+            <div className="relative w-full">
+              <button
+                type="button"
+                onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                className={`relative flex h-10 w-full items-center rounded-xl text-sm font-medium transition-colors ${
+                  isLeftNavCollapsed ? "justify-center px-0" : "gap-3 px-3"
+                } ${
+                  hasUnshippedItems
+                    ? "text-warning hover:bg-warning/10"
+                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                }`}
+                title="通知"
+                aria-label="通知"
+              >
+                <span className="relative flex h-5 w-5 shrink-0 items-center justify-center">
+                  <Bell className="h-5 w-5" />
+                  {hasUnshippedItems && (
+                    <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-warning" />
+                  )}
+                </span>
+                <span className={getLeftNavLabelClass()}>通知</span>
+              </button>
+              {isNotificationOpen && (
+                <NotificationPopover
+                  isOpen={isNotificationOpen}
+                  onClose={() => setIsNotificationOpen(false)}
+                  shippingItems={shippingItems}
+                  onViewDetails={() => {
+                    setIsNotificationOpen(false);
+                    setIsUnshippedItemsOpen(true);
+                  }}
+                />
+              )}
+            </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setIsSettingsOpen(true)}
-            className={getLeftNavLabeledItemClass(false, true)}
-            title="設定"
-            aria-label="設定"
-          >
-            <SettingsIcon className="h-5 w-5 shrink-0" />
-            <span className={getLeftNavLabelClass()}>設定</span>
-          </button>
+          <div className="mt-auto flex w-full flex-col items-center gap-3">
+            <button
+              type="button"
+              onClick={() =>
+                isOwnerMode ? setIsOwnerModeMenuOpen(true) : handleOwnerLogin()
+              }
+              className={`flex h-10 w-full items-center rounded-xl border text-sm font-medium transition-colors ${
+                isLeftNavCollapsed ? "justify-center px-0" : "gap-3 px-3"
+              } ${
+                isOwnerMode
+                  ? "border-primary/40 bg-primary/20 text-primary"
+                  : "border-border text-muted-foreground hover:bg-secondary hover:text-foreground"
+              }`}
+              title={isOwnerMode ? "オーナーモード中" : "オーナーロック中"}
+              aria-label={
+                isOwnerMode ? "オーナーモード中" : "オーナーロック中"
+              }
+            >
+              {isOwnerMode ? (
+                <Shield className="h-5 w-5 shrink-0" />
+              ) : (
+                <Lock className="h-5 w-5 shrink-0" />
+              )}
+              <span className={getLeftNavLabelClass()}>
+                {isOwnerMode ? "オーナーモード中" : "オーナーロック中"}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsOnlineStatusInfoOpen(true)}
+              className={`flex h-10 w-full items-center rounded-xl text-sm font-medium transition-colors ${
+                isLeftNavCollapsed ? "justify-center px-0" : "gap-3 px-3"
+              } ${
+                isOnline
+                  ? "text-primary hover:bg-primary/10"
+                  : "text-orange-400 hover:bg-orange-500/10"
+              }`}
+              title={isOnline ? "オンライン" : "オフライン利用中"}
+              aria-label={isOnline ? "オンライン" : "オフライン利用中"}
+            >
+              {isOnline ? (
+                <Wifi className="h-5 w-5 shrink-0" />
+              ) : (
+                <WifiOff className="h-5 w-5 shrink-0" />
+              )}
+              <span className={getLeftNavLabelClass()}>
+                {isOnline ? "オンライン" : "オフライン"}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsSettingsOpen(true)}
+              className={getLeftNavLabeledItemClass(false, true)}
+              title="設定"
+              aria-label="設定"
+            >
+              <SettingsIcon className="h-5 w-5 shrink-0" />
+              <span className={getLeftNavLabelClass()}>設定</span>
+            </button>
+          </div>
         </nav>
       </aside>
 
