@@ -122,6 +122,8 @@ export default function App() {
   const [isSalesToolbarMenuOpen, setIsSalesToolbarMenuOpen] = useState(false);
   const [isSalesToolbarCSVImportOpen, setIsSalesToolbarCSVImportOpen] =
     useState(false);
+  const [isSampleDataConfirmOpen, setIsSampleDataConfirmOpen] =
+    useState(false);
   const [swipedSaleId, setSwipedSaleId] = useState<string | null>(null);
   const [helpOpenedFrom, setHelpOpenedFrom] = useState<"guide" | "settings">(
     "guide"
@@ -631,6 +633,18 @@ export default function App() {
     URL.revokeObjectURL(link.href);
 
     addOperationLog("商品CSVエクスポート", `${products.length}件の商品を書き出しました`);
+  };
+
+  const handleLoadSampleData = () => {
+    const sampleProducts = INITIAL_PRODUCTS.map((product) => ({ ...product }));
+
+    setProducts(sampleProducts);
+    productsRef.current = sampleProducts;
+    setProductReorderPreviewProducts(null);
+    resetProductEditMode();
+    setSelectedCategory("すべて");
+    setIsSampleDataConfirmOpen(false);
+    showToast("サンプルデータを読み込みました");
   };
 
   const handleCancelProductEditAction = () => {
@@ -1619,20 +1633,6 @@ export default function App() {
             <BeginnerIcon className="h-5 w-5" />
           </button>
 
-          <button
-            type="button"
-            onClick={handleToggleProductEditMode}
-            className={getLeftNavItemClass(isProductEditMode, true)}
-            title={
-              isProductEditMode ? "商品編集を終了" : "商品編集モードを開始"
-            }
-            aria-label={
-              isProductEditMode ? "商品編集を終了" : "商品編集モードを開始"
-            }
-          >
-            <Edit className="h-5 w-5" />
-          </button>
-
           <div className="relative">
             <button
               type="button"
@@ -1758,28 +1758,7 @@ export default function App() {
                     ))}
                   </div>
                   <div className="ml-auto mr-1 flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={handleToggleProductEditMode}
-                      className={`flex h-9 w-9 items-center justify-center rounded-full border transition-colors ${
-                        isProductEditMode
-                          ? "border-white bg-white text-black"
-                          : "border-border text-muted-foreground hover:border-white/60 hover:text-white"
-                      }`}
-                      title={
-                        isProductEditMode
-                          ? "商品編集を終了"
-                          : "商品編集モードを開始"
-                      }
-                      aria-label={
-                        isProductEditMode
-                          ? "商品編集を終了"
-                          : "商品編集モードを開始"
-                      }
-                    >
-                      <Edit className="h-5 w-5" />
-                    </button>
-                    {isProductEditMode && (
+                    {isProductEditMode ? (
                       <>
                         <button
                           type="button"
@@ -1830,6 +1809,16 @@ export default function App() {
                                   type="button"
                                   onClick={() => {
                                     setIsSalesToolbarMenuOpen(false);
+                                    setIsSampleDataConfirmOpen(true);
+                                  }}
+                                  className="w-full px-4 py-3 text-left text-sm text-foreground hover:bg-secondary"
+                                >
+                                  サンプルデータ読み込み
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setIsSalesToolbarMenuOpen(false);
                                     setIsSalesToolbarCSVImportOpen(true);
                                   }}
                                   className="w-full px-4 py-3 text-left text-sm text-foreground hover:bg-secondary"
@@ -1850,7 +1839,27 @@ export default function App() {
                             </>
                           )}
                         </div>
+                        <button
+                          type="button"
+                          onClick={handleToggleProductEditMode}
+                          className="flex h-9 items-center justify-center gap-1.5 rounded-full border border-primary bg-primary px-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                          title="商品編集を終了"
+                          aria-label="商品編集を終了"
+                        >
+                          <Edit className="h-4 w-4" />
+                          <span>完了</span>
+                        </button>
                       </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleToggleProductEditMode}
+                        className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-white/60 hover:text-white"
+                        title="商品編集モードを開始"
+                        aria-label="商品編集モードを開始"
+                      >
+                        <Edit className="h-5 w-5" />
+                      </button>
                     )}
                   </div>
                 </div>
@@ -2623,6 +2632,40 @@ export default function App() {
         onSave={handleSaveProductEditAction}
         onCancel={handleCancelProductEditAction}
       />
+
+      {isSampleDataConfirmOpen && (
+        <div
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-[60]"
+          onClick={() => setIsSampleDataConfirmOpen(false)}
+        >
+          <div
+            className="w-[420px] bg-background border border-border rounded-lg p-6"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 className="mb-3">サンプルデータを読み込みますか？</h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              現在の商品データは削除されます。
+            </p>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setIsSampleDataConfirmOpen(false)}
+                className="flex-1 py-3 rounded-lg bg-secondary hover:bg-secondary/80"
+              >
+                キャンセル
+              </button>
+              <button
+                type="button"
+                onClick={handleLoadSampleData}
+                className="flex-1 py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                読み込む
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ProductDeleteConfirmModal
         isOpen={isProductDeleteConfirmOpen}
