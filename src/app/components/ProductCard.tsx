@@ -228,10 +228,10 @@ export function ProductCard({
           ? "transition-[left,top,transform,opacity,box-shadow] duration-200 ease-out"
           : "transition-[opacity,box-shadow] duration-150 ease-out"
       }`
-    : "transition-all";
+    : "transform-gpu transition-transform duration-100 ease-out";
   const cardInteractionClass =
     isOutOfStock && !isEditMode
-      ? "bg-card/50 cursor-not-allowed opacity-60"
+      ? "bg-card/50 cursor-not-allowed opacity-60 active:scale-[0.98]"
       : isDragging
         ? "bg-card"
         : "bg-card cursor-pointer hover:scale-[1.02] active:scale-[0.98]";

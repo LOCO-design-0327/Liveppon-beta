@@ -1511,11 +1511,12 @@ export default function App() {
   const hasUnshippedItems = unshippedItems.length > 0;
 
   const isLeftNavTabActive = (tab: AppTab) => currentTab === tab;
+  const buttonPressFeedbackClass = "button-press-feedback";
   const getLeftNavLabeledItemClass = (
     isActive: boolean,
     isInteractive = false
   ) =>
-    `flex h-10 w-full items-center rounded-xl text-sm font-medium transition-colors ${
+    `${buttonPressFeedbackClass} flex h-10 w-full items-center rounded-xl text-sm font-medium ${
       isLeftNavCollapsed ? "justify-center px-0" : "gap-3 px-3"
     } ${
       isActive
@@ -1685,7 +1686,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                className={`relative flex h-10 w-full items-center rounded-xl text-sm font-medium transition-colors ${
+                className={`${buttonPressFeedbackClass} relative flex h-10 w-full items-center rounded-xl text-sm font-medium ${
                   isLeftNavCollapsed ? "justify-center px-0" : "gap-3 px-3"
                 } ${
                   hasUnshippedItems
@@ -1723,7 +1724,7 @@ export default function App() {
               onClick={() =>
                 isOwnerMode ? setIsOwnerModeMenuOpen(true) : handleOwnerLogin()
               }
-              className={`flex h-10 w-full items-center rounded-xl border text-sm font-medium transition-colors ${
+              className={`${buttonPressFeedbackClass} flex h-10 w-full items-center rounded-xl border text-sm font-medium ${
                 isLeftNavCollapsed ? "justify-center px-0" : "gap-3 px-3"
               } ${
                 isOwnerMode
@@ -1748,7 +1749,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => setIsOnlineStatusInfoOpen(true)}
-              className={`flex h-10 w-full items-center rounded-xl text-sm font-medium transition-colors ${
+              className={`${buttonPressFeedbackClass} flex h-10 w-full items-center rounded-xl text-sm font-medium ${
                 isLeftNavCollapsed ? "justify-center px-0" : "gap-3 px-3"
               } ${
                 isOnline
@@ -1848,13 +1849,13 @@ export default function App() {
                   isProductReorderDragging ? "touch-none" : ""
                 }`}
               >
-                <div className="mb-4 flex items-center gap-4">
+                <div className="relative z-[80] mb-4 flex items-center gap-4">
                   <div className="flex items-center gap-6 whitespace-nowrap">
                     {categories.map((category) => (
                       <button
                         key={category}
                         onClick={() => setSelectedCategory(category)}
-                        className={`border-b pb-1 text-[14px] transition-colors ${
+                        className={`border-b pb-1 text-[14px] transition-colors duration-150 ease-out ${
                           selectedCategory === category
                             ? "border-white text-white"
                             : "border-transparent text-muted-foreground hover:text-foreground"
@@ -1876,16 +1877,17 @@ export default function App() {
                         <button
                           type="button"
                           onClick={handleAddProductFromEditMode}
-                          className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-white/60 hover:text-white"
+                          className={`${buttonPressFeedbackClass} flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-border px-3 text-sm font-medium text-muted-foreground hover:border-white/60 hover:text-white`}
                           title="商品追加"
                           aria-label="商品追加"
                         >
-                          <Plus className="h-5 w-5" />
+                          <Plus className="h-4 w-4" />
+                          <span>新規追加</span>
                         </button>
                         <button
                           type="button"
                           onClick={handleProductDeleteFabClick}
-                          className={`flex h-9 w-9 items-center justify-center rounded-full border transition-colors ${
+                          className={`${buttonPressFeedbackClass} flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border px-3 text-sm font-medium ${
                             isDeleteMode
                               ? "border-destructive bg-destructive text-destructive-foreground hover:opacity-90"
                               : "border-destructive text-destructive hover:bg-destructive/10"
@@ -1893,9 +1895,10 @@ export default function App() {
                           title="削除"
                           aria-label="削除"
                         >
-                          <Trash2 className="h-5 w-5" />
+                          <Trash2 className="h-4 w-4" />
+                          <span>削除</span>
                         </button>
-                        <div className="relative">
+                        <div className="relative z-[110]">
                           <button
                             type="button"
                             onClick={() =>
@@ -1903,7 +1906,7 @@ export default function App() {
                                 (isOpen) => !isOpen
                               )
                             }
-                            className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-white/60 hover:text-white"
+                            className={`${buttonPressFeedbackClass} flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted-foreground hover:border-white/60 hover:text-white`}
                             title="その他"
                             aria-label="その他"
                           >
@@ -1912,19 +1915,19 @@ export default function App() {
                           {isSalesToolbarMenuOpen && (
                             <>
                               <div
-                                className="fixed inset-0 z-40"
+                                className="fixed inset-0 z-[90]"
                                 onClick={() =>
                                   setIsSalesToolbarMenuOpen(false)
                                 }
                               />
-                              <div className="absolute right-0 top-full z-50 mt-2 w-44 overflow-hidden rounded-lg border border-border bg-background shadow-lg">
+                              <div className="absolute right-0 top-full z-[120] mt-2 w-44 overflow-hidden rounded-lg border border-border bg-background shadow-lg">
                                 <button
                                   type="button"
                                   onClick={() => {
                                     setIsSalesToolbarMenuOpen(false);
                                     setIsSampleDataConfirmOpen(true);
                                   }}
-                                  className="w-full px-4 py-3 text-left text-sm text-foreground hover:bg-secondary"
+                                  className={`${buttonPressFeedbackClass} w-full px-4 py-3 text-left text-sm text-foreground hover:bg-secondary`}
                                 >
                                   サンプルデータ読み込み
                                 </button>
@@ -1934,7 +1937,7 @@ export default function App() {
                                     setIsSalesToolbarMenuOpen(false);
                                     setIsSalesToolbarCSVImportOpen(true);
                                   }}
-                                  className="w-full px-4 py-3 text-left text-sm text-foreground hover:bg-secondary"
+                                  className={`${buttonPressFeedbackClass} w-full px-4 py-3 text-left text-sm text-foreground hover:bg-secondary`}
                                 >
                                   CSVインポート
                                 </button>
@@ -1944,7 +1947,7 @@ export default function App() {
                                     setIsSalesToolbarMenuOpen(false);
                                     handleExportProductsCSV();
                                   }}
-                                  className="w-full px-4 py-3 text-left text-sm text-foreground hover:bg-secondary"
+                                  className={`${buttonPressFeedbackClass} w-full px-4 py-3 text-left text-sm text-foreground hover:bg-secondary`}
                                 >
                                   CSVエクスポート
                                 </button>
@@ -1955,7 +1958,7 @@ export default function App() {
                         <button
                           type="button"
                           onClick={handleToggleProductEditMode}
-                          className="flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-primary bg-primary px-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                          className={`${buttonPressFeedbackClass} flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-primary bg-primary px-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90`}
                           title="商品編集を終了"
                           aria-label="商品編集を終了"
                         >
@@ -1967,11 +1970,12 @@ export default function App() {
                       <button
                         type="button"
                         onClick={handleToggleProductEditMode}
-                        className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-white/60 hover:text-white"
+                        className={`${buttonPressFeedbackClass} flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-border px-3 text-sm font-medium text-muted-foreground hover:border-white/60 hover:text-white`}
                         title="商品編集モードを開始"
                         aria-label="商品編集モードを開始"
                       >
-                        <Edit className="h-5 w-5" />
+                        <Edit className="h-4 w-4" />
+                        <span>編集</span>
                       </button>
                     )}
                   </div>
@@ -2126,7 +2130,7 @@ export default function App() {
                       <div className="flex gap-2 mb-4">
                         <button
                           onClick={() => setPaymentMethod("cash")}
-                          className={`flex-1 py-3 rounded-lg flex items-center justify-center gap-2 ${paymentMethod === "cash"
+                          className={`${buttonPressFeedbackClass} flex-1 py-3 rounded-lg flex items-center justify-center gap-2 ${paymentMethod === "cash"
                             ? "bg-primary text-primary-foreground"
                             : "bg-secondary hover:bg-secondary/80"
                             }`}
@@ -2136,7 +2140,7 @@ export default function App() {
                         </button>
                         <button
                           onClick={() => setPaymentMethod("qr")}
-                          className={`flex-1 py-3 rounded-lg flex items-center justify-center gap-2 ${paymentMethod === "qr"
+                          className={`${buttonPressFeedbackClass} flex-1 py-3 rounded-lg flex items-center justify-center gap-2 ${paymentMethod === "qr"
                             ? "bg-primary text-primary-foreground"
                             : "bg-secondary hover:bg-secondary/80"
                             }`}
@@ -2149,7 +2153,7 @@ export default function App() {
                       <button
                         onClick={handleCheckout}
                         disabled={cart.length === 0}
-                        className="w-full py-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className={`${buttonPressFeedbackClass} w-full py-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed`}
                       >
                         お会計へ進む
                       </button>

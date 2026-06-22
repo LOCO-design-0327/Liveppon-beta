@@ -26,6 +26,17 @@ a,
   touch-action: manipulation;
 }
 
+.button-press-feedback {
+  transform: translateZ(0);
+  transition-property: transform, background-color, border-color, color, opacity;
+  transition-duration: 100ms;
+  transition-timing-function: ease-out;
+}
+
+.button-press-feedback:not(:disabled):active {
+  transform: scale(0.98);
+}
+
 @keyframes liveppon-modal-backdrop-in {
   from {
     opacity: 0;
@@ -57,6 +68,14 @@ a,
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .button-press-feedback {
+    transition-duration: 0ms;
+  }
+
+  .button-press-feedback:not(:disabled):active {
+    transform: none;
+  }
+
   :where(.fixed.inset-0.bg-black\/70),
   :where(.fixed.inset-0.bg-black\/70) > div {
     animation: none;
