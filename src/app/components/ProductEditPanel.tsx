@@ -14,7 +14,6 @@ import { compressImage } from "../utils/imageCompression";
 const PRODUCT_NAME_MAX_LENGTH = 15;
 const DEFAULT_CATEGORY_OPTIONS = ["アパレル", "グッズ", "メディア"];
 const NEW_CATEGORY_VALUE = "__new_category__";
-type ProductEditPanelTab = "basic" | "image";
 const EMPTY_FORM_VALUES = {
   name: "",
   price: "",
@@ -87,7 +86,6 @@ export const ProductEditPanel = forwardRef<
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [addedCategories, setAddedCategories] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<ProductEditPanelTab>("basic");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const resetForm = useCallback((values: ProductEditFormValues) => {
@@ -114,10 +112,6 @@ export const ProductEditPanel = forwardRef<
     product?.imageUrl,
     resetForm,
   ]);
-
-  useEffect(() => {
-    setActiveTab("basic");
-  }, [product?.id]);
 
   const currentValues = useMemo(
     () => ({ name, price, stock, category, imageUrl }),
@@ -222,7 +216,6 @@ export const ProductEditPanel = forwardRef<
     setErrors(nextErrors);
 
     if (Object.keys(nextErrors).length > 0) {
-      setActiveTab("basic");
       return false;
     }
 
@@ -278,57 +271,32 @@ export const ProductEditPanel = forwardRef<
         </p>
       </div>
 
-      <div className="mb-4 grid grid-cols-2 gap-2 rounded-lg border border-border bg-background p-1">
-        <button
-          type="button"
-          onClick={() => setActiveTab("basic")}
-          className={`rounded-md px-3 py-2 text-sm transition-colors ${
-            activeTab === "basic"
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:bg-secondary"
-          }`}
-        >
-          基本情報
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("image")}
-          className={`rounded-md px-3 py-2 text-sm transition-colors ${
-            activeTab === "image"
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:bg-secondary"
-          }`}
-        >
-          商品画像
-        </button>
-      </div>
-
       <div className="flex-1 overflow-y-auto pr-1">
-        {activeTab === "basic" ? (
-          <div className="space-y-4">
-            <div>
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <label className="text-sm text-muted-foreground">
-                  商品名
-                </label>
-                <span className="text-xs text-muted-foreground">
-                  15文字以内
-                </span>
-              </div>
-              <input
-                type="text"
-                value={name}
-                maxLength={PRODUCT_NAME_MAX_LENGTH}
-                onChange={(event) =>
-                  setName(event.target.value.slice(0, PRODUCT_NAME_MAX_LENGTH))
-                }
-                className="w-full px-4 py-3 bg-background border border-border rounded-lg"
-              />
-              {errors.name && (
-                <p className="mt-1 text-xs text-destructive">{errors.name}</p>
-              )}
+        <div className="space-y-4">
+          <div>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <label className="text-sm text-muted-foreground">
+                商品名
+              </label>
+              <span className="text-xs text-muted-foreground">
+                15文字以内
+              </span>
             </div>
+            <input
+              type="text"
+              value={name}
+              maxLength={PRODUCT_NAME_MAX_LENGTH}
+              onChange={(event) =>
+                setName(event.target.value.slice(0, PRODUCT_NAME_MAX_LENGTH))
+              }
+              className="w-full px-4 py-3 bg-background border border-border rounded-lg"
+            />
+            {errors.name && (
+              <p className="mt-1 text-xs text-destructive">{errors.name}</p>
+            )}
+          </div>
 
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-sm text-muted-foreground mb-2 block">
                 価格
@@ -366,124 +334,111 @@ export const ProductEditPanel = forwardRef<
                 </p>
               )}
             </div>
-
-            <div>
-              <label className="text-sm text-muted-foreground mb-2 block">
-                カテゴリ
-              </label>
-              <select
-                value={isCreatingCategory ? NEW_CATEGORY_VALUE : category}
-                onChange={(event) => {
-                  if (event.target.value === NEW_CATEGORY_VALUE) {
-                    setIsCreatingCategory(true);
-                    return;
-                  }
-
-                  setCategory(event.target.value);
-                  setIsCreatingCategory(false);
-                  setNewCategoryName("");
-                  setErrors((prev) => ({ ...prev, newCategory: undefined }));
-                }}
-                className="w-full px-4 py-3 bg-background border border-border rounded-lg"
-              >
-                <option value="">未設定</option>
-                {categoryOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-                <option value={NEW_CATEGORY_VALUE}>
-                  ＋ 新しいカテゴリを作成
-                </option>
-              </select>
-
-              {isCreatingCategory && (
-                <div className="mt-3 p-3 bg-background border border-border rounded-lg space-y-2">
-                  <label className="text-sm text-muted-foreground block">
-                    新しいカテゴリ名
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={newCategoryName}
-                      onChange={(event) =>
-                        setNewCategoryName(event.target.value)
-                      }
-                      className="min-w-0 flex-1 px-3 py-2 bg-card border border-border rounded-lg"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddCategory}
-                      className="px-4 py-2 bg-secondary rounded-lg hover:bg-secondary/80 whitespace-nowrap"
-                    >
-                      追加
-                    </button>
-                  </div>
-                  {errors.newCategory && (
-                    <p className="text-xs text-destructive">
-                      {errors.newCategory}
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
           </div>
-        ) : (
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm text-muted-foreground mb-2 block">
-                商品画像
-              </label>
 
-              {imageUrl ? (
-                <div className="space-y-3">
-                  <div className="w-full aspect-square max-h-64 bg-muted rounded-lg overflow-hidden">
-                    <img
-                      src={imageUrl}
-                      alt={`${product.name}の商品画像`}
-                      decoding="async"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+          <div>
+            <label className="text-sm text-muted-foreground mb-2 block">
+              カテゴリ
+            </label>
+            <select
+              value={isCreatingCategory ? NEW_CATEGORY_VALUE : category}
+              onChange={(event) => {
+                if (event.target.value === NEW_CATEGORY_VALUE) {
+                  setIsCreatingCategory(true);
+                  return;
+                }
 
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="flex-1 py-3 bg-secondary rounded-lg hover:bg-secondary/80 flex items-center justify-center gap-2"
-                    >
-                      <Upload className="w-4 h-4" />
-                      画像を選択
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleRemoveImage}
-                      className="px-4 py-3 bg-destructive/20 text-destructive rounded-lg hover:bg-destructive/30 flex items-center justify-center gap-2"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      画像を削除
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="w-full h-40 bg-card border border-dashed border-border rounded-lg flex flex-col items-center justify-center gap-2 text-muted-foreground">
-                    <ImageIcon className="w-8 h-8" />
-                    <p className="text-sm">画像が登録されていません</p>
-                  </div>
+                setCategory(event.target.value);
+                setIsCreatingCategory(false);
+                setNewCategoryName("");
+                setErrors((prev) => ({ ...prev, newCategory: undefined }));
+              }}
+              className="w-full px-4 py-3 bg-background border border-border rounded-lg"
+            >
+              <option value="">未設定</option>
+              {categoryOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+              <option value={NEW_CATEGORY_VALUE}>
+                ＋ 新しいカテゴリを作成
+              </option>
+            </select>
+
+            {isCreatingCategory && (
+              <div className="mt-3 p-3 bg-background border border-border rounded-lg space-y-2">
+                <label className="text-sm text-muted-foreground block">
+                  新しいカテゴリ名
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newCategoryName}
+                    onChange={(event) =>
+                      setNewCategoryName(event.target.value)
+                    }
+                    className="min-w-0 flex-1 px-3 py-2 bg-card border border-border rounded-lg"
+                  />
                   <button
                     type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-full py-3 bg-secondary rounded-lg hover:bg-secondary/80 flex items-center justify-center gap-2"
+                    onClick={handleAddCategory}
+                    className="px-4 py-2 bg-secondary rounded-lg hover:bg-secondary/80 whitespace-nowrap"
                   >
-                    <Upload className="w-4 h-4" />
-                    画像を選択
+                    追加
                   </button>
+                </div>
+                {errors.newCategory && (
+                  <p className="text-xs text-destructive">
+                    {errors.newCategory}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="border-t border-border pt-4">
+            <label className="text-sm text-muted-foreground mb-2 block">
+              商品画像
+            </label>
+
+            <div className="relative w-full aspect-video bg-card border border-border rounded-lg overflow-hidden">
+              {imageUrl ? (
+                <>
+                  <img
+                    src={imageUrl}
+                    alt={`${product.name}の商品画像`}
+                    decoding="async"
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    title="画像を削除"
+                    aria-label="画像を削除"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </>
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                  <ImageIcon className="w-8 h-8" />
+                  <p className="text-sm">画像が登録されていません</p>
                 </div>
               )}
             </div>
+
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="mt-3 w-full py-3 bg-secondary rounded-lg hover:bg-secondary/80 flex items-center justify-center gap-2"
+            >
+              <Upload className="w-4 h-4" />
+              画像を変更
+            </button>
           </div>
-        )}
+        </div>
       </div>
 
       <input

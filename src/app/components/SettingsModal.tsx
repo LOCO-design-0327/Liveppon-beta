@@ -171,7 +171,9 @@ export function SettingsModal({
                 <SettingsCard
                   icon={Palette}
                   title="テーマ"
-                  description="配色・表示モードを設定"
+                  description="近日公開。今後のアップデートで追加予定です"
+                  isDisabled
+                  statusLabel="開発中"
                   onClick={onOpenTheme}
                 />
               </div>

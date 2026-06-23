@@ -6,6 +6,7 @@ import {
   Settings as SettingsIcon,
   Banknote,
   QrCode,
+  CheckCircle,
   Plus,
   Bell,
   ChevronLeft,
@@ -99,7 +100,13 @@ export default function App() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [sales, setSales] = useLocalStorage<Sale[]>("sales", []);
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "qr">("cash");
+  const [checkoutPaymentMethod, setCheckoutPaymentMethod] = useState<
+    "cash" | "qr"
+  >("cash");
+  const [receivedAmount, setReceivedAmount] = useState<number | null>(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isCheckoutMode, setIsCheckoutMode] = useState(false);
+  const [isCheckoutComplete, setIsCheckoutComplete] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAppInfoOpen, setIsAppInfoOpen] = useState(false);
   const [isOwnerPinOpen, setIsOwnerPinOpen] = useState(false);
@@ -781,6 +788,22 @@ export default function App() {
   }, [isProductEditMode]);
 
   useEffect(() => {
+    if (!isCheckoutComplete) return;
+
+    const timerId = window.setTimeout(() => {
+      setIsCheckoutMode(false);
+      setIsCheckoutOpen(false);
+      setIsCheckoutComplete(false);
+      setReceivedAmount(null);
+      setCheckoutPaymentMethod("cash");
+    }, 1200);
+
+    return () => {
+      window.clearTimeout(timerId);
+    };
+  }, [isCheckoutComplete]);
+
+  useEffect(() => {
     let animationFrameId = 0;
     let hideTimerId = 0;
 
@@ -1016,16 +1039,41 @@ export default function App() {
     (sum, item) => sum + item.price * item.quantity,
     0
   );
+  const changeAmount =
+    receivedAmount === null ? null : receivedAmount - cartTotal;
 
   const handleCheckout = () => {
     if (cart.length === 0) return;
-    setIsCheckoutOpen(true);
+    setIsCheckoutOpen(false);
+    setIsThankYouOpen(false);
+    setReceivedAmount(null);
+    setCheckoutPaymentMethod(paymentMethod);
+    setIsCheckoutComplete(false);
+    setIsCheckoutMode(true);
   };
 
-  const handleCompleteCheckout = (receivedAmount?: number) => {
+  const handleBackToSalesMode = () => {
+    setIsCheckoutMode(false);
+    setIsCheckoutOpen(false);
+    setIsCheckoutComplete(false);
+    setReceivedAmount(null);
+    setCheckoutPaymentMethod("cash");
+  };
+
+  const handleCloseCheckout = () => {
+    handleBackToSalesMode();
+  };
+
+  const handleCompleteCheckout = (
+    receivedAmount?: number,
+    completedPaymentMethod: "cash" | "qr" = paymentMethod
+  ) => {
     if (isTestMode) {
       setCart([]);
       setIsCheckoutOpen(false);
+      setReceivedAmount(null);
+      setCheckoutPaymentMethod("cash");
+      setIsCheckoutComplete(true);
       return;
     }
 
@@ -1034,9 +1082,13 @@ export default function App() {
       timestamp: new Date(),
       items: [...cart],
       total: cartTotal,
-      paymentMethod,
-      receivedAmount,
-      change: receivedAmount ? receivedAmount - cartTotal : undefined,
+      paymentMethod: completedPaymentMethod,
+      receivedAmount:
+        completedPaymentMethod === "cash" ? receivedAmount : undefined,
+      change:
+        completedPaymentMethod === "cash" && receivedAmount !== undefined
+          ? receivedAmount - cartTotal
+          : undefined,
     };
 
     setSales([sale, ...sales]);
@@ -1063,14 +1115,16 @@ export default function App() {
 
     addOperationLog(
       "販売完了",
-      `${paymentMethod === "cash" ? "現金決済" : "QRコード決済"} / ${cart.map((item) => `${item.name} × ${item.quantity}`).join(", ")}`,
+      `${completedPaymentMethod === "cash" ? "現金決済" : "QRコード決済"} / ${cart.map((item) => `${item.name} × ${item.quantity}`).join(", ")}`,
       "",
       `¥${cartTotal.toLocaleString()}`
     );
 
     setCart([]);
     setIsCheckoutOpen(false);
-    setIsThankYouOpen(true);
+    setReceivedAmount(null);
+    setCheckoutPaymentMethod("cash");
+    setIsCheckoutComplete(true);
   };
 
   const handleOwnerLogin = () => {
@@ -1843,13 +1897,201 @@ export default function App() {
         {currentTab === "sales" && (
           <div className="h-full flex">
             <div className="relative flex-1 overflow-hidden">
-              <div
-                ref={productListScrollRef}
-                className={`h-full p-6 pb-20 overflow-y-auto flex flex-col ${
-                  isProductReorderDragging ? "touch-none" : ""
-                }`}
-              >
-                <div className="relative z-[80] mb-4 flex items-center gap-4">
+              <div className="h-full p-6 flex flex-col overflow-hidden">
+                {isCheckoutMode ? (
+                  isCheckoutComplete ? (
+                    <div className="flex h-full items-center justify-center">
+                      <div className="text-center">
+                        <CheckCircle className="mx-auto mb-5 h-20 w-20 text-primary" />
+                        <div className="mb-3 text-3xl font-semibold">
+                          決済完了
+                        </div>
+                        <p className="text-lg text-muted-foreground">
+                          ありがとうございました
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                  <div className="h-full flex flex-col">
+                    <button
+                      type="button"
+                      onClick={handleBackToSalesMode}
+                      className={`${buttonPressFeedbackClass} self-start text-sm text-muted-foreground hover:text-foreground`}
+                    >
+                      ＜ 販売へ戻る
+                    </button>
+
+                    <div className="flex-1 flex items-center justify-center">
+                      <div className="w-full max-w-2xl rounded-lg border border-border bg-card p-8 text-center">
+                        <h2 className="mb-6">会計</h2>
+                        <div className="mb-8 flex justify-center gap-8">
+                          {([
+                            ["cash", "現金"],
+                            ["qr", "QR"],
+                          ] as const).map(([method, label]) => (
+                            <button
+                              key={method}
+                              type="button"
+                              onClick={() => setCheckoutPaymentMethod(method)}
+                              className={`border-b pb-1 text-sm transition-colors duration-150 ease-out ${
+                                checkoutPaymentMethod === method
+                                  ? "border-white text-white"
+                                  : "border-transparent text-muted-foreground hover:text-foreground"
+                              }`}
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="mb-6 text-lg font-semibold">
+                          {checkoutPaymentMethod === "cash"
+                            ? "現金決済"
+                            : "QR決済"}
+                        </div>
+                        <div className="text-sm text-muted-foreground mb-2">
+                          合計
+                        </div>
+                        <div className="text-4xl text-primary">
+                          ¥{cartTotal.toLocaleString()}
+                        </div>
+                        {checkoutPaymentMethod === "cash" ? (
+                          <div className="mt-8 space-y-5">
+                            <div className="grid grid-cols-2 gap-3 text-left">
+                              <div className="rounded-lg border border-border bg-background p-4">
+                                <div className="mb-1 text-xs text-muted-foreground">
+                                  預かり金額
+                                </div>
+                                <div className="text-2xl font-semibold">
+                                  {receivedAmount === null
+                                    ? "未入力"
+                                    : `¥${receivedAmount.toLocaleString()}`}
+                                </div>
+                              </div>
+                              <div className="rounded-lg border border-border bg-background p-4">
+                                <div className="mb-1 text-xs text-muted-foreground">
+                                  {changeAmount !== null && changeAmount < 0
+                                    ? "不足"
+                                    : "お釣り"}
+                                </div>
+                                <div
+                                  className={`text-2xl font-semibold ${
+                                    changeAmount !== null && changeAmount < 0
+                                      ? "text-destructive"
+                                      : "text-primary"
+                                  }`}
+                                >
+                                  {changeAmount === null
+                                    ? "—"
+                                    : changeAmount < 0
+                                      ? `¥${Math.abs(changeAmount).toLocaleString()}`
+                                      : `¥${changeAmount.toLocaleString()}`}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              {[
+                                { label: "ちょうど", amount: cartTotal },
+                                { label: "¥1,000", amount: 1000 },
+                                { label: "¥5,000", amount: 5000 },
+                                { label: "¥10,000", amount: 10000 },
+                                { label: "その他入力", amount: null },
+                              ].map(({ label, amount }) => (
+                                <button
+                                  key={label}
+                                  type="button"
+                                  onClick={() => {
+                                    if (amount !== null) {
+                                      setReceivedAmount(amount);
+                                    }
+                                  }}
+                                  className={`${buttonPressFeedbackClass} min-h-20 rounded-lg border border-border bg-background px-4 text-lg font-semibold hover:bg-secondary ${
+                                    label === "その他入力" ? "col-span-2" : ""
+                                  }`}
+                                >
+                                  {label}
+                                </button>
+                              ))}
+                            </div>
+                            <button
+                              type="button"
+                              disabled={
+                                receivedAmount === null ||
+                                receivedAmount < cartTotal
+                              }
+                              onClick={() => {
+                                if (
+                                  receivedAmount !== null &&
+                                  receivedAmount >= cartTotal
+                                ) {
+                                  handleCompleteCheckout(
+                                    receivedAmount,
+                                    "cash"
+                                  );
+                                }
+                              }}
+                              className={`${buttonPressFeedbackClass} w-full rounded-lg py-4 font-semibold ${
+                                receivedAmount !== null &&
+                                receivedAmount >= cartTotal
+                                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                                  : "cursor-not-allowed bg-primary/30 text-primary-foreground/70"
+                              }`}
+                            >
+                              決済完了
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="mt-8 flex flex-col items-center">
+                            <div className="mb-5 flex h-64 w-64 items-center justify-center rounded-lg bg-white p-4">
+                              {qrCodeImage ? (
+                                <img
+                                  src={qrCodeImage}
+                                  alt="QRコード"
+                                  className="h-full w-full object-contain"
+                                />
+                              ) : (
+                                <div className="text-center text-black">
+                                  <QrCode className="mx-auto mb-4 h-24 w-24" />
+                                  <p className="mb-1 text-sm">
+                                    QRコードが登録されていません
+                                  </p>
+                                  <p className="text-xs text-gray-600">
+                                    設定からQRコードを登録してください
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                            <div className="mb-5 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-3 text-center">
+                              <p className="text-sm font-medium text-yellow-400">
+                                お客様にQRコードを読み取っていただき、
+                                <br />
+                                決済完了画面を確認してください。
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              disabled={!qrCodeImage}
+                              onClick={() => {
+                                if (qrCodeImage) {
+                                  handleCompleteCheckout(undefined, "qr");
+                                }
+                              }}
+                              className={`${buttonPressFeedbackClass} w-full rounded-lg py-4 font-semibold ${
+                                qrCodeImage
+                                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                                  : "cursor-not-allowed bg-primary/30 text-primary-foreground/70"
+                              }`}
+                            >
+                              決済完了
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  )
+                ) : (
+                  <>
+                <div className="relative z-[80] mb-4 flex shrink-0 items-center gap-4">
                   <div className="flex items-center gap-6 whitespace-nowrap">
                     {categories.map((category) => (
                       <button
@@ -1874,16 +2116,6 @@ export default function App() {
                             : "translate-x-1 opacity-0 duration-100 ease-in pointer-events-none"
                         }`}
                       >
-                        <button
-                          type="button"
-                          onClick={handleAddProductFromEditMode}
-                          className={`${buttonPressFeedbackClass} flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-border px-3 text-sm font-medium text-muted-foreground hover:border-white/60 hover:text-white`}
-                          title="商品追加"
-                          aria-label="商品追加"
-                        >
-                          <Plus className="h-4 w-4" />
-                          <span>新規追加</span>
-                        </button>
                         <button
                           type="button"
                           onClick={handleProductDeleteFabClick}
@@ -1981,7 +2213,12 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="flex-1">
+                <div
+                  ref={productListScrollRef}
+                  className={`min-h-0 flex-1 overflow-y-auto pb-20 ${
+                    isProductReorderDragging ? "touch-none" : ""
+                  }`}
+                >
                   {visibleProducts.length === 0 ? (
                     <div className="flex items-center justify-center h-full">
                       <button
@@ -2001,7 +2238,8 @@ export default function App() {
                         </div>
                       </button>
                     </div>
-                  ) : filteredProducts.length === 0 ? (
+                  ) : filteredProducts.length === 0 &&
+                    !(isProductEditMode && !isDeleteMode) ? (
                     <div className="text-center py-12 text-muted-foreground">
                       このカテゴリの商品はありません
                     </div>
@@ -2063,9 +2301,32 @@ export default function App() {
                           />
                         </div>
                       ))}
+                      {isProductEditMode && !isDeleteMode && (
+                        <div className="relative aspect-[25/28]">
+                          <button
+                            type="button"
+                            onClick={handleAddProductFromEditMode}
+                            className="w-full h-full bg-card hover:bg-card/80 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center gap-4 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                            title="商品を追加"
+                            aria-label="商品を追加"
+                          >
+                            <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
+                              <Plus className="w-8 h-8 text-primary" />
+                            </div>
+                            <div className="text-center">
+                              <h3 className="text-sm">商品を追加</h3>
+                              <p className="text-xs text-muted-foreground px-4 mt-1">
+                                一覧に新しい商品を追加
+                              </p>
+                            </div>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -2488,7 +2749,7 @@ export default function App() {
 
       <CheckoutModal
         isOpen={isCheckoutOpen}
-        onClose={() => setIsCheckoutOpen(false)}
+        onClose={handleCloseCheckout}
         cart={cart}
         total={cartTotal}
         paymentMethod={paymentMethod}
