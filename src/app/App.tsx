@@ -1517,6 +1517,33 @@ export default function App() {
     setCancelTargetSaleId(null);
   };
 
+  const filteredSales = sales.filter((sale) => {
+    if (
+      searchQuery &&
+      !sale.items.some((item) =>
+        item.name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    ) {
+      return false;
+    }
+
+    if (
+      filterPaymentMethod !== "all" &&
+      sale.paymentMethod !== filterPaymentMethod
+    ) {
+      return false;
+    }
+
+    if (filterDateFrom || filterDateTo) {
+      const saleDate = new Date(sale.timestamp).toISOString().split("T")[0];
+
+      if (filterDateFrom && saleDate < filterDateFrom) return false;
+      if (filterDateTo && saleDate > filterDateTo) return false;
+    }
+
+    return true;
+  });
+
   const exportSalesCSV = () => {
     const headers = [
       "ID",
@@ -1553,6 +1580,51 @@ export default function App() {
     link.href = URL.createObjectURL(blob);
     link.download = `liveppon_sales_${new Date().toISOString().split("T")[0]}.csv`;
     link.click();
+  };
+
+  const handleExportSalesHistoryPdf = async () => {
+    if (filteredSales.length === 0) {
+      showToast("出力対象の販売履歴がありません");
+      return;
+    }
+
+    // Open the preview while the user gesture is active so iPad can share the PDF.
+    const previewWindow = window.open("", "_blank");
+
+    try {
+      const { createSalesHistoryPdf } = await import(
+        "./utils/salesHistoryPdf"
+      );
+      const pdfBytes = await createSalesHistoryPdf({
+        sales: filteredSales,
+        filters: {
+          searchQuery,
+          paymentMethod: filterPaymentMethod,
+          dateFrom: filterDateFrom,
+          dateTo: filterDateTo,
+        },
+      });
+      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const pdfUrl = URL.createObjectURL(blob);
+      const now = new Date();
+      const fileDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+      if (previewWindow) {
+        previewWindow.location.href = pdfUrl;
+      } else {
+        const link = document.createElement("a");
+        link.href = pdfUrl;
+        link.download = `Liveppon_販売履歴_${fileDate}.pdf`;
+        link.click();
+      }
+
+      window.setTimeout(() => URL.revokeObjectURL(pdfUrl), 60_000);
+      showToast("販売履歴PDFを出力しました");
+    } catch (error) {
+      previewWindow?.close();
+      console.error("Failed to export sales history PDF", error);
+      showToast("PDFの出力に失敗しました");
+    }
   };
 
   const activeSales = sales.filter((s) => !s.isCancelled);
@@ -2477,10 +2549,11 @@ export default function App() {
                   </button>
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">
-                  販売履歴の検索・確認・CSV出力ができます
+                  販売履歴の検索・確認・CSV／PDF出力ができます
                 </p>
               </div>
 
+              <div className="flex items-center gap-2">
               <button
                 onClick={isOwnerMode ? exportSalesCSV : handleOwnerLogin}
                 className={`px-4 py-2 rounded-lg flex items-center gap-2 ${isOwnerMode
@@ -2505,6 +2578,33 @@ export default function App() {
                 )}
                 CSV出力
               </button>
+              <button
+                onClick={
+                  isOwnerMode ? handleExportSalesHistoryPdf : handleOwnerLogin
+                }
+                className={`px-4 py-2 rounded-lg flex items-center gap-2 ${isOwnerMode
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                  : "bg-card/50 text-muted-foreground cursor-pointer hover:bg-card/70"
+                  }`}
+              >
+                {!isOwnerMode && (
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 15v2m-6 4h12a2 2 0 00-2-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                    />
+                  </svg>
+                )}
+                PDF出力
+              </button>
+              </div>
             </div>
 
             <div className="mb-4 space-y-3">
@@ -2568,43 +2668,7 @@ export default function App() {
               </p>
             ) : (
               <div className="space-y-3">
-                {sales
-                  .filter((sale) => {
-                    if (
-                      searchQuery &&
-                      !sale.items.some((item) =>
-                        item.name
-                          .toLowerCase()
-                          .includes(searchQuery.toLowerCase())
-                      )
-                    ) {
-                      return false;
-                    }
-
-                    if (
-                      filterPaymentMethod !== "all" &&
-                      sale.paymentMethod !== filterPaymentMethod
-                    ) {
-                      return false;
-                    }
-
-                    if (filterDateFrom || filterDateTo) {
-                      const saleDate = new Date(sale.timestamp)
-                        .toISOString()
-                        .split("T")[0];
-
-                      if (filterDateFrom && saleDate < filterDateFrom) {
-                        return false;
-                      }
-
-                      if (filterDateTo && saleDate > filterDateTo) {
-                        return false;
-                      }
-                    }
-
-                    return true;
-                  })
-                  .map((sale) => {
+                {filteredSales.map((sale) => {
                     const isSwiped = swipedSaleId === sale.id;
 
                     return (
