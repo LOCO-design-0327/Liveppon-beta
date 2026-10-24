@@ -1045,7 +1045,7 @@ export default function App() {
   const changeAmount =
     receivedAmount === null ? null : receivedAmount - cartTotal;
   const canCompleteCashCheckout =
-    receivedAmount === null || receivedAmount >= cartTotal;
+    receivedAmount !== null && receivedAmount >= cartTotal;
   const effectiveCashReceivedAmount = receivedAmount ?? cartTotal;
   const canCompleteCheckoutFromCart =
     cart.length > 0 &&
