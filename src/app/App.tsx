@@ -1967,9 +1967,9 @@ export default function App() {
                       ＜ 戻る
                     </button>
 
-                    <div className="min-h-0 flex-1 overflow-y-auto py-4">
-                      <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col justify-center pb-8">
-                        <div className="mb-14 flex justify-center gap-16">
+                    <div className="min-h-0 flex-1 overflow-hidden py-2">
+                      <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col justify-center pb-2">
+                        <div className="mb-6 flex justify-center gap-6">
                           {([
                             ["cash", "現金"],
                             ["qr", "QR"],
@@ -1978,7 +1978,7 @@ export default function App() {
                               key={method}
                               type="button"
                               onClick={() => setCheckoutPaymentMethod(method)}
-                              className={`${buttonPressFeedbackClass} min-h-20 w-56 rounded-full border text-3xl font-semibold transition-colors duration-150 ease-out ${
+                              className={`${buttonPressFeedbackClass} min-h-14 w-56 rounded-full border text-base font-semibold transition-colors duration-150 ease-out ${
                                 checkoutPaymentMethod === method
                                   ? "border-primary bg-primary text-primary-foreground"
                                   : "border-border bg-card text-muted-foreground hover:text-foreground"
@@ -1990,8 +1990,8 @@ export default function App() {
                         </div>
 
                         {checkoutPaymentMethod === "cash" ? (
-                          <div className="space-y-10">
-                            <div className="mx-auto w-full max-w-2xl space-y-6">
+                          <div className="space-y-6">
+                            <div className="mx-auto w-full max-w-2xl space-y-3">
                               <div className="grid grid-cols-[1fr_auto] items-baseline gap-8">
                                 <div className="text-3xl">お会計</div>
                                 <div className="text-6xl">
@@ -2029,7 +2029,7 @@ export default function App() {
                               </div>
                             </div>
 
-                            <div className="grid grid-cols-[minmax(0,1fr)_14rem] gap-6">
+                            <div className="grid grid-cols-[minmax(0,1fr)_14rem] gap-4">
                               <div className="grid grid-cols-3 overflow-hidden rounded-lg border border-border">
                                 {[
                                   "1",
@@ -2058,7 +2058,7 @@ export default function App() {
                                 ))}
                               </div>
 
-                              <div className="flex flex-col gap-4">
+                              <div className="flex flex-col gap-3">
                                 {[
                                   {
                                     label: "ちょうど",
