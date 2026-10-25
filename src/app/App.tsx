@@ -1604,7 +1604,7 @@ export default function App() {
           dateTo: filterDateTo,
         },
       });
-      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const blob = new Blob([Uint8Array.from(pdfBytes)], { type: "application/pdf" });
       const pdfUrl = URL.createObjectURL(blob);
       const now = new Date();
       const fileDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
