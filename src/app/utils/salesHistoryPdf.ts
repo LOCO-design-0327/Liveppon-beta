@@ -12,6 +12,8 @@ const TEXT_COLOR = rgb(0.08, 0.08, 0.08);
 const MUTED_TEXT_COLOR = rgb(0.32, 0.32, 0.32);
 const BORDER_COLOR = rgb(0.72, 0.72, 0.72);
 const HEADER_FILL = rgb(0.94, 0.94, 0.94);
+const TRANSACTION_BORDER_COLOR = rgb(0.62, 0.62, 0.62);
+const TRANSACTION_TOTAL_FILL = rgb(0.953, 0.957, 0.965);
 
 type SalesHistoryPdfFilters = {
   searchQuery: string;
@@ -222,6 +224,9 @@ export async function createSalesHistoryPdf({
     payment,
     amount,
     muted = false,
+    isTransactionStart = false,
+    fillColor,
+    keepNextRowTogether = false,
   }: {
     date: string;
     name: string;
@@ -229,18 +234,31 @@ export async function createSalesHistoryPdf({
     payment: string;
     amount: string;
     muted?: boolean;
+    isTransactionStart?: boolean;
+    fillColor?: ReturnType<typeof rgb>;
+    keepNextRowTogether?: boolean;
   }) => {
-    ensureRowSpace(ROW_HEIGHT);
+    ensureRowSpace(ROW_HEIGHT * (keepNextRowTogether ? 2 : 1));
     const rowBottom = cursorY - ROW_HEIGHT;
     const color = muted ? MUTED_TEXT_COLOR : TEXT_COLOR;
     const values = [date, name, quantity, payment, amount];
     let x = PAGE_MARGIN;
+
+    if (isTransactionStart) {
+      page.drawLine({
+        start: { x: PAGE_MARGIN, y: cursorY },
+        end: { x: A4_WIDTH - PAGE_MARGIN, y: cursorY },
+        thickness: 0.9,
+        color: TRANSACTION_BORDER_COLOR,
+      });
+    }
 
     page.drawRectangle({
       x,
       y: rowBottom,
       width: A4_WIDTH - PAGE_MARGIN * 2,
       height: ROW_HEIGHT,
+      ...(fillColor ? { color: fillColor } : {}),
       borderColor: BORDER_COLOR,
       borderWidth: 0.35,
     });
@@ -275,23 +293,22 @@ export async function createSalesHistoryPdf({
         date: isFirstItem ? formatDateTime(sale.timestamp) : "",
         name: item.name,
         quantity: String(item.quantity),
-        payment: isFirstItem
-          ? sale.isCancelled
-            ? `${paymentLabel}（キャンセル）`
-            : paymentLabel
-          : "",
+        payment: isFirstItem ? paymentLabel : "",
         amount: formatCurrency(item.price * item.quantity),
         muted: Boolean(sale.isCancelled),
+        isTransactionStart: isFirstItem,
+        keepNextRowTogether: index === sale.items.length - 1,
       });
     });
 
     drawDetailRow({
       date: "",
-      name: sale.isCancelled ? "キャンセル済み取引" : "取引合計",
+      name: sale.isCancelled ? "キャンセル済み" : "取引合計",
       quantity: "",
       payment: "",
       amount: formatCurrency(sale.total),
       muted: Boolean(sale.isCancelled),
+      fillColor: sale.isCancelled ? undefined : TRANSACTION_TOTAL_FILL,
     });
   });
 
