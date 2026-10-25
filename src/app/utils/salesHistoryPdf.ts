@@ -1,6 +1,6 @@
 import { PDFDocument, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
-import notoSansJapaneseUrl from "@fontsource/noto-sans-jp/files/noto-sans-jp-japanese-400-normal.woff?url";
+import notoSansJapaneseUrl from "@expo-google-fonts/noto-sans-jp/400Regular/NotoSansJP_400Regular.ttf?url";
 import type { Sale } from "../types";
 
 const A4_WIDTH = 595.28;
@@ -100,8 +100,10 @@ export async function createSalesHistoryPdf({
 
   const pdf = await PDFDocument.create();
   pdf.registerFontkit(fontkit);
+  // fontkit's subset output drops glyph mappings in generated PDFs. Embed the
+  // complete Japanese TTF so iPadOS and browser PDF viewers receive all glyphs.
   const font = await pdf.embedFont(await fontResponse.arrayBuffer(), {
-    subset: true,
+    subset: false,
   });
 
   const completedSales = sales.filter((sale) => !sale.isCancelled);
