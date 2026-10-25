@@ -47,10 +47,10 @@ export function HelpModal({ isOpen, onClose, onBackToSettings }: HelpModalProps)
             </h3>
             <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
               <li>販売画面で商品カードをタップしてカートに追加</li>
-              <li>数量を調整する場合は＋/－ボタンを使用</li>
-              <li>決済方法（現金/QR）を選択</li>
-              <li>「お会計へ進む」ボタンをタップ</li>
-              <li>決済画面で金額を確認し、決済完了</li>
+              <li>必要に応じてカート内の＋／−で数量を調整</li>
+              <li>「お会計へ進む」をタップ</li>
+              <li>会計画面で決済方法を選択</li>
+              <li>金額を確認して決済を完了</li>
             </ol>
           </section>
 
@@ -67,7 +67,7 @@ export function HelpModal({ isOpen, onClose, onBackToSettings }: HelpModalProps)
                 <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside ml-4">
                   <li>預かり金額を入力（¥1,000/¥5,000などのボタン使用可）</li>
                   <li>お釣りが自動計算されます</li>
-                  <li>「決済完了」ボタンをタップ</li>
+                  <li>預かり金額が合計金額以上になると決済完了できます</li>
                 </ul>
               </div>
               <div>
@@ -104,19 +104,26 @@ export function HelpModal({ isOpen, onClose, onBackToSettings }: HelpModalProps)
               <p>
                 <strong>商品を編集したい：</strong>
                 <br />
-                設定画面→商品設定からオーナーモードでログインして編集
+                販売画面右上の「編集」から商品を追加・編集します。チーム販売ではオーナーPINが必要です。
               </p>
               <p>
                 <strong>販売をキャンセルしたい：</strong>
                 <br />
-                販売履歴画面から該当の販売を選び、キャンセルボタンをタップ
+                販売履歴で対象の取引をタップし、右側に表示された「取引キャンセル」から操作します。
               </p>
               <p>
                 <strong>データをバックアップしたい：</strong>
                 <br />
-                設定画面→バックアップから「バックアップを書き出す」を実行
+                設定画面→バックアップから「バックアップを書き出す」を実行します。読み込みは現在のデータを上書きします。
               </p>
             </div>
+          </section>
+
+          <section>
+            <h3 className="mb-3">販売履歴を出力する</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              販売履歴画面からCSV・PDF形式で販売記録を出力できます。出力にはオーナーモードが必要です。
+            </p>
           </section>
         </div>
 

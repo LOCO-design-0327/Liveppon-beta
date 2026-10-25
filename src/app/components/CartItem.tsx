@@ -57,27 +57,27 @@ export function CartItem({
           <div className="flex items-center justify-end gap-3 mt-3">
             <button
               onClick={onDecrease}
-              className="w-7 h-7 rounded-full border border-primary/60 text-primary hover:bg-primary/10 flex items-center justify-center"
+              className="w-11 h-11 rounded-full border border-primary/60 text-primary hover:bg-primary/10 flex items-center justify-center"
             >
-              <Minus className="w-4 h-4" />
+              <Minus className="w-5 h-5" />
             </button>
 
-            <span className="w-5 text-center text-sm">
+            <span className="min-w-8 text-center text-lg tabular-nums">
               {quantity}
             </span>
 
             <button
               onClick={onIncrease}
-              className="w-7 h-7 rounded-full border border-primary/60 text-primary hover:bg-primary/10 flex items-center justify-center"
+              className="w-11 h-11 rounded-full border border-primary/60 text-primary hover:bg-primary/10 flex items-center justify-center"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-5 h-5" />
             </button>
 
             <button
               onClick={onRemove}
-              className="ml-6 w-7 h-7 rounded-full bg-destructive/30 hover:bg-destructive/40 flex items-center justify-center"
+              className="ml-6 w-11 h-11 rounded-full bg-destructive/30 hover:bg-destructive/40 flex items-center justify-center"
             >
-              <Trash2 className="w-4 h-4 text-destructive" />
+              <Trash2 className="w-5 h-5 text-destructive" />
             </button>
           </div>
         </div>

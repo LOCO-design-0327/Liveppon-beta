@@ -28,7 +28,7 @@ export function NotificationPopover({
         <div className="p-4 border-b border-border">
           <div className="flex items-center gap-2 text-warning">
             <Package className="w-5 h-5" />
-            <span className="font-medium">未発送の商品があります</span>
+            <span className="font-medium">未発送の商品リスト</span>
           </div>
         </div>
 
